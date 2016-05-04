@@ -1,8 +1,8 @@
 //
 //  AppDelegate.swift
-//  eXchange
+//  Exchange
 //
-//  Created by Emanuel Castaneda on 5/4/16.
+//  Created by Emanuel Castaneda on 3/10/16.
 //  Copyright © 2016 Emanuel Castaneda. All rights reserved.
 //
 
@@ -16,6 +16,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
+        UITabBar.appearance().tintColor = UIColor.orangeColor()
         return true
     }
 
