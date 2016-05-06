@@ -36,15 +36,15 @@ class NewsFeedTableViewCell: UITableViewCell {
         }
         if (ready) {
             if (mealLiked[row]) {
-            hasTapped = true
-            likeButton.setTitle("Unlike", forState: .Normal)
-            likeButton.setTitleColor(UIColor.orangeColor(), forState: .Normal)
-        }
-        else {
-            hasTapped = false
-            likeButton.setTitle("Like", forState: .Normal)
-            likeButton.setTitleColor(UIColor.blackColor(), forState: .Normal)
-        }
+                hasTapped = true
+                likeButton.setTitle("Unlike", forState: .Normal)
+                likeButton.setTitleColor(UIColor.orangeColor(), forState: .Normal)
+            }
+            else {
+                hasTapped = false
+                likeButton.setTitle("Like", forState: .Normal)
+                likeButton.setTitleColor(UIColor.blackColor(), forState: .Normal)
+            }
         }
     }
     

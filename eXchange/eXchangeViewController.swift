@@ -203,7 +203,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                 return "Princeton"
             }
             else {
-                return "Best frandz"
+                return "Best Friends"
             }
         }
         

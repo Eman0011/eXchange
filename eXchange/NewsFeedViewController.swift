@@ -51,41 +51,55 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
         let delay = 1 * Double(NSEC_PER_SEC)
         let time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
         dispatch_after(time, dispatch_get_main_queue()) {
-            var temp = [Meal]()
+           
+            // the following code reverses the newsfeed but the number of likes not reversed
+            /*var temp = [Meal]()
             for (var i = self.allMeals.count-1; i>=0; i=i-1){
                 temp.append(self.allMeals[i])
             }
-            print("next line is temp")
-            print(temp)
+            self.allMeals = temp */
             
-            self.allMeals = temp
+            
             ready = true
             for meal in self.allMeals {
-                mealLiked.append(false)
-                if NSUserDefaults.standardUserDefaults().objectForKey("array") != nil
-                {
-                    mealLiked = NSUserDefaults.standardUserDefaults().objectForKey("array") as! [Bool]
+                if (mealLiked.count == 0) {
+                    mealLiked.append(false)
                 }
                 if (meal.host.club == self.currentUser!.club) {
                     self.filteredMeals.append(meal)
                 }
-                
             }
+                if NSUserDefaults.standardUserDefaults().objectForKey("array") != nil
+                {
+                    mealLiked = NSUserDefaults.standardUserDefaults().objectForKey("array") as! [Bool]
+                }
+                let count1 = mealLiked.count
+                let count2 = self.allMeals.count
+
+                if (count1 < count2) {
+                    for i in count1...count2-1{
+                        mealLiked.append(false)
+                    }
+                }
+            if (count2 < count1) {
+                for i in count2...count1-1{
+                    mealLiked[i] = false
+                }
+            }
+                NSUserDefaults.standardUserDefaults().setObject(mealLiked, forKey: "array")
+            
             self.tableView.reloadData()
         }
         
     }
     
     func loadMeals() {
-        
         let mealsRoot = dataBaseRoot.childByAppendingPath("newsfeed/")
         mealsRoot.observeEventType(.ChildAdded, withBlock: { snapshot in
             let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>
             let meal: Meal = self.getMealFromDictionary(dict)
             self.allMeals.append(meal)
-            // self.tableView.reloadData()
         })
-        print(allMeals)
         
     }
     
@@ -169,7 +183,6 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
             newsfeedRoot.observeSingleEventOfType(.Value, withBlock: { snapshot in
                 var dict = snapshot.value as! Dictionary<String, String>
                 numLikes = dict["Likes"]!
-                print(numLikes)
                 cell.likesLabel.text = String(numLikes) + " \u{e022}"
             })
             
