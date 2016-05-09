@@ -50,28 +50,6 @@ class CreateRequestViewController: UIViewController, UIPickerViewDataSource, UIP
         if ((selectedClub == selectedUser.club || selectedClub == currentUser.club) && (selectedType == "Lunch" || selectedType == "Dinner")) {
             let pendingString = "pending/" + self.selectedUser.netid
             let pendingRoot = dataBaseRoot.childByAppendingPath(pendingString)
-            var endRoot = -1
-        
-            pendingRoot.observeSingleEventOfType(.Value, withBlock: { snapshot in
-                var num: Int = 0
-                let children = snapshot.children
-                let count = snapshot.childrenCount
-
-                while let child = children.nextObject() as? FDataSnapshot {
-                    if (num != Int(child.key)) {
-                      
-                        endRoot = num
-                        break
-                    }
-                    else {
-                        num+=1
-                    }
-                }
-                if (endRoot == -1) {
-                    endRoot = Int(count)
-                }
-            });
-            
             
             let formatter = NSDateFormatter()
             formatter.dateFormat = "MM-dd-yyyy"
@@ -90,13 +68,9 @@ class CreateRequestViewController: UIViewController, UIPickerViewDataSource, UIP
             
             let newEntry: Dictionary<String, String> = ["Date": formatter.stringFromDate(datePicker.date), "Guest": (guest?.netid)!, "Host": (host?.netid)!, "Type": selectedType, "Club": selectedClub]
             
-            let delay = 1 * Double(NSEC_PER_SEC)
-            let time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
-            dispatch_after(time, dispatch_get_main_queue()) {
-                let newPendingRoot = self.dataBaseRoot.childByAppendingPath(pendingString + "/" + String(endRoot))
-                newPendingRoot.updateChildValues(newEntry)
-                self.dismissViewControllerAnimated(true, completion: {});
-            }
+            let newPendingRoot = pendingRoot.childByAutoId()
+            newPendingRoot.updateChildValues(newEntry)
+            self.dismissViewControllerAnimated(true, completion: {});
             
             let friendsString = "friends/" + currentUser.netid + "/"
             let friendsRoot = dataBaseRoot.childByAppendingPath(friendsString + selectedUser.netid)
@@ -118,8 +92,6 @@ class CreateRequestViewController: UIViewController, UIPickerViewDataSource, UIP
 
         }
     }
-    
-
     
     //MARK: - Delegates and data sources
     //MARK: Data Sources
