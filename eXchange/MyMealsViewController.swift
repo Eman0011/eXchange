@@ -341,10 +341,16 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         if (unfinishedSelected) {
             let newViewController:CompleteUnfinishedViewController = segue.destinationViewController as! CompleteUnfinishedViewController
-            newViewController.currentUser = self.currentUser
-            newViewController.selectedUser = self.selectedUser
             let indexPath = self.tableView.indexPathForSelectedRow
-            newViewController.selectedUser = self.unfinishedData[indexPath!.row].guest
+            
+            newViewController.currentUser = self.currentUser
+            
+            if (self.unfinishedData[indexPath!.row].guest.netid == currentUser.netid) {
+                newViewController.selectedUser = self.unfinishedData[indexPath!.row].host
+            }
+            else {
+                newViewController.selectedUser = self.unfinishedData[indexPath!.row].guest
+            }
             newViewController.setType = self.unfinishedData[indexPath!.row].type
             newViewController.setClub = self.unfinishedData[indexPath!.row].guest.club
         }
