@@ -10,7 +10,7 @@ import UIKit
 import Firebase
 
 class eXchangeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchResultsUpdating {
-
+    
     // MARK: View Controller Outlets
     
     @IBOutlet var eXchangeBanner: UIImageView!
@@ -61,7 +61,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             self.currentUser = tbc.currentUser
             
             self.loadPending()
-      
+            
             self.tableView.reloadData()
             print("Done loading")
         }
@@ -116,7 +116,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         }
         return Meal(date: dictionary["Date"]!, type: dictionary["Type"]!, host: host!, guest: guest!)
     }
-
+    
     func loadStudents() {
         let studentsRoot = dataBaseRoot.childByAppendingPath("students")
         studentsRoot.observeEventType(.ChildAdded, withBlock:  { snapshot in
@@ -152,7 +152,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         
         tableView.tableHeaderView = searchController.searchBar
         tableView.reloadData()
-
+        
     }
     
     @IBAction func pendingButtonPressed(sender: AnyObject) {
@@ -206,7 +206,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                 return "Best Friends"
             }
         }
-        
+            
         else {
             return ""
         }
@@ -224,8 +224,8 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                 cell.clubLabel.text = student.club
             }
         }
-        
-        // If the user is not searching, just populate cells with all appropriate groups of users
+            
+            // If the user is not searching, just populate cells with all appropriate groups of users
         else {
             if requestSelected {
                 if (indexPath.section == 1) {
@@ -264,11 +264,11 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                 else {
                     student = pendingData[indexPath.row].host
                 }
-
+                
                 if student.name != "" {
                     let string1 = student.name + " wants to get " + pendingData[indexPath.row].type + " at " + pendingData[indexPath.row].host.club
                     let string2 = " on " + self.getDayOfWeekString(pendingData[indexPath.row].date)!
-
+                    
                     cell.nameLabel.text = string1 + string2
                     cell.clubLabel.text = ""
                 }
@@ -291,7 +291,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             let myCalendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)!
             let myComponents = myCalendar.components([.Weekday, .Month , .Day], fromDate: todayDate)
             let month = myComponents.month
-
+            
             let date = myComponents.day
             let weekDay = myComponents.weekday
             var stringDay = ""
@@ -340,7 +340,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                 stringMonth = "November "
             case 12:
                 stringMonth = "December "
-
+                
             default:
                 stringDay = "Month"
             }
@@ -380,9 +380,9 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                 }
             }
         }
-
-        
-        // If the user taps on a cell in the pending meals tab, then popup an alert allowing them to accept, reschedule, decline, or cancel the action
+            
+            
+            // If the user taps on a cell in the pending meals tab, then popup an alert allowing them to accept, reschedule, decline, or cancel the action
         else {
             
             let alert = UIAlertController(title: nil, message: nil, preferredStyle: UIAlertControllerStyle.Alert)
@@ -399,65 +399,23 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     // Define special actions for accept, reschedule, and decline options
     func executeAction(alert: UIAlertAction!, indexPath: NSIndexPath){
         let response = alert.title!
-       
+        
         path = indexPath.row
         mealAtPath = pendingData[path]
         
         if (response == "Accept") {
+            var found = false
             //send the exchange to the database
-            let upcomingString1 = "upcoming/" + pendingData[indexPath.row].host.netid
-            let upcomingString2 = "upcoming/" + pendingData[indexPath.row].guest.netid
-
+            let upcomingString1 = "upcoming/" + pendingData[self.path].host.netid
+            let upcomingString2 = "upcoming/" + pendingData[self.path].guest.netid
+            
             let upcomingRoot1 = dataBaseRoot.childByAppendingPath(upcomingString1)
             let upcomingRoot2 = dataBaseRoot.childByAppendingPath(upcomingString2)
-
-            var endRoot1 = -1
-            var endRoot2 = -1
-            
-            upcomingRoot1.observeEventType(.Value, withBlock: { snapshot in
-                var num: Int = 0
-                let children = snapshot.children
-                let count = snapshot.childrenCount
-                
-                while let child = children.nextObject() as? FDataSnapshot {
-                    if (num != Int(child.key)) {
-                        endRoot1 = num
-                        break
-                    }
-                    else {
-                        num+=1
-                    }
-                }
-                if (endRoot1 == -1) {
-                    endRoot1 = Int(count)
-                }
-            });
-            
-            upcomingRoot2.observeEventType(.Value, withBlock: { snapshot in
-                var num: Int = 0
-                let children = snapshot.children
-                let count = snapshot.childrenCount
-                
-                while let child = children.nextObject() as? FDataSnapshot {
-                    if (num != Int(child.key)) {
-                        endRoot2 = num
-                        break
-                    }
-                    else {
-                        num+=1
-                    }
-                }
-                if (endRoot2 == -1) {
-                    endRoot2 = Int(count)
-                }
-            });
-            
-            
             
             let formatter = NSDateFormatter()
             formatter.dateFormat = "MM-dd-yyyy"
             
-            let newEntry: Dictionary<String, String> = ["Date": pendingData[indexPath.row].date, "Guest": pendingData[indexPath.row].guest.netid, "Host": pendingData[indexPath.row].host.netid, "Type": pendingData[indexPath.row].type, "Club": pendingData[indexPath.row].host.club]
+            let newEntry: Dictionary<String, String> = ["Date": pendingData[self.path].date, "Guest": pendingData[self.path].guest.netid, "Host": pendingData[self.path].host.netid, "Type": pendingData[self.path].type, "Club": pendingData[self.path].host.club]
             
             let pendingString1 = "pending/" + self.currentUser.netid + "/"
             
@@ -472,14 +430,18 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                     let dateString = (child.value["Date"] as! NSString) as String
                     let typeString = (child.value["Type"] as! NSString) as String
                     
-                    if(clubString == self.pendingData[indexPath.row].host.club &&
-                        guestString == self.pendingData[indexPath.row].guest.netid &&
-                        hostString == self.pendingData[indexPath.row].host.netid &&
-                        dateString == self.pendingData[indexPath.row].date &&
-                        typeString == self.pendingData[indexPath.row].type) {
-                        let pendingString2 = pendingString1 + String(child.key)
-                        let pendingRootToRemove = self.dataBaseRoot.childByAppendingPath(pendingString2)
-                        pendingRootToRemove.removeValue()
+                    if(clubString == self.pendingData[self.path].host.club &&
+                        guestString == self.pendingData[self.path].guest.netid &&
+                        hostString == self.pendingData[self.path].host.netid &&
+                        dateString == self.pendingData[self.path].date &&
+                        typeString == self.pendingData[self.path].type) {
+                            if(!found) {
+                                found = true
+                                let pendingString2 = pendingString1 + String(child.key)
+                                print(child.key)
+                                let pendingRootToRemove = self.dataBaseRoot.childByAppendingPath(pendingString2)
+                                pendingRootToRemove.removeValue()
+                            }
                     }
                 }
             });
@@ -488,14 +450,14 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             let delay = 1 * Double(NSEC_PER_SEC)
             let time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
             dispatch_after(time, dispatch_get_main_queue()) {
-                let newUpcomingRoot1 = self.dataBaseRoot.childByAppendingPath(upcomingString1 + "/" + String(endRoot1))
-                let newUpcomingRoot2 = self.dataBaseRoot.childByAppendingPath(upcomingString2 + "/" + String(endRoot2))
-
+                let newUpcomingRoot1 = upcomingRoot1.childByAutoId()
+                let newUpcomingRoot2 = upcomingRoot2.childByAutoId()
+                
                 newUpcomingRoot1.updateChildValues(newEntry)
                 newUpcomingRoot2.updateChildValues(newEntry)
                 
                 //remove the request from pending requests
-                self.pendingData.removeAtIndex(indexPath.row)
+                self.pendingData.removeAtIndex(self.path)
                 self.tableView.reloadData()
             }
             
@@ -504,11 +466,12 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             //prompt the user to create a new exchange
             
             performSegueWithIdentifier("rescheduleRequestSegue", sender: nil)
-  
+            
             tableView.reloadData()
         }
-        
+            
         else if (response == "Decline") {
+            var found = false
             let pendingString1 = "pending/" + self.currentUser.netid + "/"
             
             let pendingRootToUpdate = self.dataBaseRoot.childByAppendingPath(pendingString1)
@@ -520,25 +483,28 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                     let hostString = (child.value["Host"] as! NSString) as String
                     let dateString = (child.value["Date"] as! NSString) as String
                     let typeString = (child.value["Type"] as! NSString) as String
-                    if(clubString == self.pendingData[indexPath.row].host.club &&
-                        guestString == self.pendingData[indexPath.row].guest.netid &&
-                        hostString == self.pendingData[indexPath.row].host.netid &&
-                        dateString == self.pendingData[indexPath.row].date &&
-                        typeString == self.pendingData[indexPath.row].type) {
-                        let pendingString2 = pendingString1 + String(child.key)
-                        let pendingRootToRemove = self.dataBaseRoot.childByAppendingPath(pendingString2)
-                        pendingRootToRemove.removeValue()
+                    
+                    if(clubString == self.pendingData[self.path].host.club &&
+                        guestString == self.pendingData[self.path].guest.netid &&
+                        hostString == self.pendingData[self.path].host.netid &&
+                        dateString == self.pendingData[self.path].date &&
+                        typeString == self.pendingData[self.path].type) {
+                            if(!found) {
+                                found = true
+                                let pendingString2 = pendingString1 + String(child.key)
+                                let pendingRootToRemove = self.dataBaseRoot.childByAppendingPath(pendingString2)
+                                pendingRootToRemove.removeValue()
+                            }
                     }
                 }
             });
             let delay = 1 * Double(NSEC_PER_SEC)
             let time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
             dispatch_after(time, dispatch_get_main_queue()) {
-                //remove the request from pending requests
-                self.pendingData.removeAtIndex(indexPath.row)
+                self.pendingData.removeAtIndex(self.path)
                 self.tableView.reloadData()
             }
-        
+            
         }
     }
     
@@ -551,7 +517,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                 return student.name.lowercaseString.containsString(searchText.lowercaseString)
             }
         }
-
+        
         tableView.reloadData()
     }
     
@@ -566,7 +532,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         if unwindSegue.identifier == "unwindCancel" {
             rescheduleDoneButtonHit = false
         }
-        
+            
         else if unwindSegue.identifier == "unwindDone" {
             // create new pending request in requester's pending
             let oldHost : Student = (mealAtPath?.host)!
@@ -584,94 +550,70 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             print(currentUser.club)
             print(selectedType)
             if ((selectedClub == otherUser.club || selectedClub == currentUser.club) && (selectedType == "Lunch" || selectedType == "Dinner")) {
-
-            let pendingString = "pending/" + otherUser.netid + "/"
-            let pendingRoot = dataBaseRoot.childByAppendingPath(pendingString)
-            var endRoot = -1
-            
-            pendingRoot.observeSingleEventOfType(.Value, withBlock: { snapshot in
-                var num: Int = 0
-                let children = snapshot.children
-                let count = snapshot.childrenCount
                 
+                let pendingString = "pending/" + otherUser.netid + "/"
+                let pendingRoot = dataBaseRoot.childByAppendingPath(pendingString)
                 
-                while let child = children.nextObject() as? FDataSnapshot {
-                    if (num != Int(child.key)) {
-                        endRoot = num
-                        break
-                    }
-                    else {
-                        num+=1
-                    }
+                let formatter = NSDateFormatter()
+                formatter.dateFormat = "MM-dd-yyyy"
+                
+                var host: Student? = nil
+                var guest: Student? = nil
+                
+                if (selectedClub == otherUser.club) {
+                    host = otherUser
+                    guest = currentUser
                 }
-                if (endRoot == -1) {
-                    endRoot = Int(count)
+                else {
+                    host = currentUser
+                    guest = otherUser
                 }
-            });
-            
-            
-            let formatter = NSDateFormatter()
-            formatter.dateFormat = "MM-dd-yyyy"
-            
-            var host: Student? = nil
-            var guest: Student? = nil
-            
-            if (selectedClub == otherUser.club) {
-                host = otherUser
-                guest = currentUser
-            }
-            else {
-                host = currentUser
-                guest = otherUser
-            }
-            
-            let newEntry: Dictionary<String, String> = ["Club": selectedClub, "Date": selectedDate, "Guest": (guest?.netid)!, "Host": (host?.netid)!, "Type": selectedType]
-            
-            var delay = 1 * Double(NSEC_PER_SEC)
-            var time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
-            dispatch_after(time, dispatch_get_main_queue()) {
-                let newPendingRoot = self.dataBaseRoot.childByAppendingPath(pendingString + "/" + String(endRoot))
-                newPendingRoot.updateChildValues(newEntry)
-                //self.dismissViewControllerAnimated(true, completion: {});
-            }
-
-            
-            // this code removes the request from the requested user
-            let pendingString1 = "pending/" + self.currentUser.netid + "/"
-            
-            let pendingRootToUpdate = self.dataBaseRoot.childByAppendingPath(pendingString1)
-            pendingRootToUpdate.observeEventType(.Value, withBlock: { snapshot in
-                let children = snapshot.children
-                while let child = children.nextObject() as? FDataSnapshot {
-                    let clubString = (child.value["Club"] as! NSString) as String
-                    let guestString = (child.value["Guest"] as! NSString) as String
-                    let hostString = (child.value["Host"] as! NSString) as String
-                    let dateString = (child.value["Date"] as! NSString) as String
-                    let typeString = (child.value["Type"] as! NSString) as String
-
-                    if(clubString == self.pendingData[self.path].host.club &&
-                        guestString == self.pendingData[self.path].guest.netid &&
-                        hostString == self.pendingData[self.path].host.netid &&
-                        dateString == self.pendingData[self.path].date &&
-                        typeString == self.pendingData[self.path].type) {
-                            let pendingString2 = pendingString1 + String(child.key)
-                            let pendingRootToRemove = self.dataBaseRoot.childByAppendingPath(pendingString2)
-                            pendingRootToRemove.removeValue()
+                
+                let newEntry: Dictionary<String, String> = ["Club": selectedClub, "Date": selectedDate, "Guest": (guest?.netid)!, "Host": (host?.netid)!, "Type": selectedType]
+                
+                var delay = 1 * Double(NSEC_PER_SEC)
+                var time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
+                dispatch_after(time, dispatch_get_main_queue()) {
+                    let newPendingRoot = pendingRoot.childByAutoId()
+                    newPendingRoot.updateChildValues(newEntry)
+                }
+                
+                // this code removes the request from the requested user
+                let pendingString1 = "pending/" + self.currentUser.netid + "/"
+                
+                let pendingRootToUpdate = self.dataBaseRoot.childByAppendingPath(pendingString1)
+                pendingRootToUpdate.observeEventType(.Value, withBlock: { snapshot in
+                    let children = snapshot.children
+                    while let child = children.nextObject() as? FDataSnapshot {
+                        let clubString = (child.value["Club"] as! NSString) as String
+                        let guestString = (child.value["Guest"] as! NSString) as String
+                        let hostString = (child.value["Host"] as! NSString) as String
+                        let dateString = (child.value["Date"] as! NSString) as String
+                        let typeString = (child.value["Type"] as! NSString) as String
+                        
+                        if(clubString == self.pendingData[self.path].host.club &&
+                            guestString == self.pendingData[self.path].guest.netid &&
+                            hostString == self.pendingData[self.path].host.netid &&
+                            dateString == self.pendingData[self.path].date &&
+                            typeString == self.pendingData[self.path].type) {
+                                let pendingString2 = pendingString1 + String(child.key)
+                                let pendingRootToRemove = self.dataBaseRoot.childByAppendingPath(pendingString2)
+                                pendingRootToRemove.removeValue()
+                        }
                     }
+                });
+                delay = 1 * Double(NSEC_PER_SEC)
+                time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
+                dispatch_after(time, dispatch_get_main_queue()) {
+                    self.dismissViewControllerAnimated(true, completion: {});
+                    
+                    
+                    //remove the request from pending requests
+                    self.pendingData.removeAtIndex(self.path)
+                    self.tableView.reloadData()
+                    self.rescheduleDoneButtonHit = true
                 }
-            });
-            delay = 1 * Double(NSEC_PER_SEC)
-            time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
-            dispatch_after(time, dispatch_get_main_queue()) {
-                self.dismissViewControllerAnimated(true, completion: {});
                 
-                
-                //remove the request from pending requests
-                self.pendingData.removeAtIndex(self.path)
-                self.tableView.reloadData()
-                self.rescheduleDoneButtonHit = true
-            }
-            
             }
         }
     }
@@ -700,15 +642,15 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             if (self.pendingData[path].host.netid == userNetID) {
                 newViewController.selectedUser = self.pendingData[path].guest
             }
-            
+                
             else if (self.pendingData[path].guest.netid == userNetID) {
                 newViewController.selectedUser = self.pendingData[path].host
             }
             newViewController.currentUser = self.currentUser
         }
         
-    // Get the new view controller using segue.destinationViewController.
-    // Pass the selected object to the new view controller.
+        // Get the new view controller using segue.destinationViewController.
+        // Pass the selected object to the new view controller.
     }
 }
 

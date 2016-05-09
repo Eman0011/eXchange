@@ -11,6 +11,7 @@ import Firebase
 
 class eXchangeTabBarController: UITabBarController {
     var userNetID: String = "emanuelc"
+
     var currentUser: Student = Student(name: "Emanuel Castaneda", netid: "emanuelc", club: "Cannon", proxNumber: "", image: "")
     var studentsData: [Student] = []
     var netidToStudentMap = [String : Student] ()
