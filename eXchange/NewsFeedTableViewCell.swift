@@ -55,6 +55,7 @@ class NewsFeedTableViewCell: UITableViewCell {
             NSUserDefaults.standardUserDefaults().setObject(mealLiked, forKey: "array")
             self.likeButton.setTitle("Like", forState: .Normal)
             self.likeButton.setTitleColor(UIColor.blackColor(), forState: .Normal)
+           // var reverseMeals = allMeals.count-currCellNum-1
             let newsRoot = dataBaseRoot.childByAppendingPath("newsfeed/" + String(row) + "/Likes")
             let otherRoot = dataBaseRoot.childByAppendingPath("newsfeed/" + String(row))
             var likes = 0
@@ -73,6 +74,7 @@ class NewsFeedTableViewCell: UITableViewCell {
             NSUserDefaults.standardUserDefaults().setObject(mealLiked, forKey: "array")
             self.likeButton.setTitle("Unlike", forState: .Normal)
             self.likeButton.setTitleColor(UIColor.orangeColor(), forState: .Normal)
+            //var reverseMeals = allMeals.count-currCellNum-1
             let newsRoot = dataBaseRoot.childByAppendingPath("newsfeed/" + String(row) + "/Likes")
             let otherRoot = dataBaseRoot.childByAppendingPath("newsfeed/" + String(row))
             var likes = 0

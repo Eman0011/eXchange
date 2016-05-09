@@ -11,6 +11,8 @@ import Firebase
 var currCellNum = 0
 var princetonButtonSelected = true
 var mealLiked = [Bool]()
+var allMeals: [Meal] = []
+
 
 class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
@@ -20,7 +22,6 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
     @IBOutlet var myClubButton: UIButton!
     
     var currentUser: Student? = nil
-    var allMeals: [Meal] = []
     
     var filteredMeals: [Meal] = []
     
@@ -53,15 +54,15 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
         dispatch_after(time, dispatch_get_main_queue()) {
            
             // the following code reverses the newsfeed but the number of likes not reversed
-            /*var temp = [Meal]()
-            for (var i = self.allMeals.count-1; i>=0; i=i-1){
-                temp.append(self.allMeals[i])
+           /* var temp = [Meal]()
+            for (var i = allMeals.count-1; i>=0; i=i-1){
+                temp.append(allMeals[i])
             }
-            self.allMeals = temp */
-            
+            allMeals = temp
+            */
             
             ready = true
-            for meal in self.allMeals {
+            for meal in allMeals {
                 if (mealLiked.count == 0) {
                     mealLiked.append(false)
                 }
@@ -74,7 +75,7 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
                     mealLiked = NSUserDefaults.standardUserDefaults().objectForKey("array") as! [Bool]
                 }
                 let count1 = mealLiked.count
-                let count2 = self.allMeals.count
+                let count2 = allMeals.count
 
                 if (count1 < count2) {
                     for i in count1...count2-1{
@@ -98,11 +99,9 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
         mealsRoot.observeEventType(.ChildAdded, withBlock: { snapshot in
             let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>
             let meal: Meal = self.getMealFromDictionary(dict)
-            self.allMeals.append(meal)
+            allMeals.append(meal)
         })
-        
     }
-    
     
     func getMealFromDictionary(dictionary: Dictionary<String, String>) -> Meal {
         let netID1 = dictionary["Host"]!
@@ -155,7 +154,7 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if princetonButtonSelected {
-            return self.allMeals.count
+            return allMeals.count
         }
         else {
             return filteredMeals.count
@@ -169,9 +168,11 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
         let attrs1 = [NSFontAttributeName : UIFont.boldSystemFontOfSize(17), NSForegroundColorAttributeName: UIColor.orangeColor()]
         let attrs2 = [NSFontAttributeName : UIFont.boldSystemFontOfSize(17), NSForegroundColorAttributeName: UIColor.blackColor()]
         let attrs3 = [NSFontAttributeName : UIFont.boldSystemFontOfSize(15), NSForegroundColorAttributeName: UIColor.blackColor()]
+   
         
         if princetonButtonSelected {
             currCellNum = indexPath.row
+          // let reverseMeals = allMeals.count-currCellNum-1
             let newsfeedRoot = dataBaseRoot.childByAppendingPath("newsfeed/" + String(currCellNum))
             let cell = tableView.dequeueReusableCellWithIdentifier("newsfeedCell", forIndexPath: indexPath) as! NewsFeedTableViewCell
             cell.row = indexPath.row
@@ -179,6 +180,24 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
             cell.newsLabel?.numberOfLines = 0
             meal = allMeals[indexPath.row]
             cell.clubImage?.image = UIImage(named: meal.host.club)
+            
+            newsfeedRoot.observeEventType(.Value, withBlock: { snapshot in
+            let count1 = mealLiked.count
+            let count2 = allMeals.count
+            
+            if (count1 < count2) {
+                for i in count1...count2-1{
+                    mealLiked.append(false)
+                }
+            }
+            if (count2 < count1) {
+                for i in count2...count1-1{
+                    mealLiked[i] = false
+                }
+            }
+            NSUserDefaults.standardUserDefaults().setObject(mealLiked, forKey: "array")
+            })
+            
             var numLikes = "-1"
             newsfeedRoot.observeSingleEventOfType(.Value, withBlock: { snapshot in
                 var dict = snapshot.value as! Dictionary<String, String>
@@ -202,7 +221,7 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
             return cell
         }
         else {
-            
+            //var reverseMeals = allMeals.count-currCellNum-1
             currCellNum = indexPath.row
             let cell = tableView.dequeueReusableCellWithIdentifier("newsfeedCell", forIndexPath: indexPath) as! NewsFeedTableViewCell
             cell.row2 = indexPath.row
@@ -218,9 +237,25 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
             cell.newsLabel?.numberOfLines = 0
             meal = filteredMeals[indexPath.row]
             cell.clubImage?.image = UIImage(named: meal.host.club)
+            let newsfeedRoot = dataBaseRoot.childByAppendingPath("newsfeed/" + String(cell.row))
+            newsfeedRoot.observeEventType(.Value, withBlock: { snapshot in
+                let count1 = mealLiked.count
+                let count2 = allMeals.count
+                
+                if (count1 < count2) {
+                    for i in count1...count2-1{
+                        mealLiked.append(false)
+                    }
+                }
+                if (count2 < count1) {
+                    for i in count2...count1-1{
+                        mealLiked[i] = false
+                    }
+                }
+                NSUserDefaults.standardUserDefaults().setObject(mealLiked, forKey: "array")
+            })
             
             var numLikes = "-1"
-            let newsfeedRoot = dataBaseRoot.childByAppendingPath("newsfeed/" + String(cell.row))
             newsfeedRoot.observeSingleEventOfType(.Value, withBlock: { snapshot in
                 var dict = snapshot.value as! Dictionary<String, String>
                 numLikes = dict["Likes"]!
