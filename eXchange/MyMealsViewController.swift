@@ -65,9 +65,17 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
         
     }
     
+    override func viewWillAppear(animated: Bool) {
+        self.loadUnfinished()
+        self.loadUpcoming()
+        self.loadHistory()
+        self.tableView.reloadData()
+    }
+    
     func loadHistory() {
         let path = "complete-exchange/" + userNetID
         let historyRoot = dataBaseRoot.childByAppendingPath(path)
+        self.historyData = []
         
         historyRoot.observeEventType(.ChildAdded, withBlock: { snapshot in
             let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>
@@ -80,6 +88,7 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     func loadUnfinished() {
         let path = "incomplete-exchange/" + userNetID
         let unfinishedRoot = dataBaseRoot.childByAppendingPath(path)
+        self.unfinishedData = []
         
         unfinishedRoot.observeEventType(.ChildAdded, withBlock: { snapshot in
             let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>
@@ -99,6 +108,8 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     func loadUpcoming() {
         let path = "upcoming/" + userNetID
         let upcomingRoot = dataBaseRoot.childByAppendingPath(path)
+        self.upcomingData = []
+        
         
         upcomingRoot.observeEventType(.ChildAdded, withBlock: { snapshot in
             let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>

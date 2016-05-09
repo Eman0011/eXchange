@@ -84,6 +84,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     override func viewWillAppear(animated: Bool) {
         self.studentsData = []
         loadStudents()
+        self.tableView.reloadData()
     }
     
     func loadPending() {

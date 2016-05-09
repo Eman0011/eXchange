@@ -32,7 +32,6 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         eXchangeBanner.image = UIImage(named:"exchange_banner")!
         self.tableView.rowHeight = 100.0
         
@@ -92,6 +91,10 @@ class NewsFeedViewController: UIViewController, UITableViewDataSource, UITableVi
             self.tableView.reloadData()
         }
         
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        self.tableView.reloadData()
     }
     
     func loadMeals() {

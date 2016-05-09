@@ -47,6 +47,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             userImageView.image = UIImage(named: "princetonTiger.png")
         }
     }
+    
     @IBAction func changeUserImage(sender: AnyObject) {
         let photoPicker = UIImagePickerController()
         photoPicker.delegate = self
