@@ -21,11 +21,11 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     @IBOutlet var upcomingButton: UIButton!
     
     var historyData: [eXchange] = []
-    var unfinishedData: [eXchange] = []
+    var unfinishedData: [Meal] = []
     var upcomingData: [eXchange] = []
     var studentsData: [Student] = []
     
-
+    
     var selectedUser: Student = Student(name: "", netid: "", club: "", proxNumber: "", image: "")
     var currentUser: Student = Student(name: "", netid: "", club: "", proxNumber: "", image: "")
     var historySelected = false
@@ -34,7 +34,7 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     let formatter = NSDateFormatter()
     var dataBaseRoot = Firebase(url:"https://princeton-exchange.firebaseIO.com")
     var userNetID: String = ""
-
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -83,14 +83,14 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
         
         unfinishedRoot.observeEventType(.ChildAdded, withBlock: { snapshot in
             let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>
-            let exchange: eXchange = self.getIncompleteOrUpcomingFromDictionary(dict)
+            let meal: Meal = self.getIncompleteFromDictionary(dict)
             let todayDate = NSDate()
             let myCalendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)!
             let todayComponents = myCalendar.components([.Month], fromDate: todayDate)
-            let exchangeComponents = myCalendar.components([.Month], fromDate: self.formatter.dateFromString(exchange.meal1.date)!)
+            let exchangeComponents = myCalendar.components([.Month], fromDate: self.formatter.dateFromString(meal.date)!)
             
             if (todayComponents.month == exchangeComponents.month) {
-                self.unfinishedData.append(exchange)
+                self.unfinishedData.append(meal)
                 self.tableView.reloadData()
             }
         })
@@ -102,7 +102,7 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
         
         upcomingRoot.observeEventType(.ChildAdded, withBlock: { snapshot in
             let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>
-            let exchange: eXchange = self.getIncompleteOrUpcomingFromDictionary(dict)
+            let exchange: eXchange = self.getUpcomingFromDictionary(dict)
             self.upcomingData.append(exchange)
             self.tableView.reloadData()
         })
@@ -132,12 +132,12 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
         return exchange
     }
     
-    func getIncompleteOrUpcomingFromDictionary(dictionary: Dictionary<String, String>) -> eXchange {
+    func getUpcomingFromDictionary(dictionary: Dictionary<String, String>) -> eXchange {
         let hostID = dictionary["Host"]
         let guestID = dictionary["Guest"]
         var host: Student? = nil
         var guest: Student? = nil
-
+        
         
         for student in studentsData {
             if (student.netid == hostID) {
@@ -153,6 +153,27 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
         exchange.meal1 = meal
         
         return exchange
+    }
+    
+    func getIncompleteFromDictionary(dictionary: Dictionary<String, String>) -> Meal {
+        let hostID = dictionary["Host"]
+        let guestID = dictionary["Guest"]
+        var host: Student? = nil
+        var guest: Student? = nil
+        
+        
+        for student in studentsData {
+            if (student.netid == hostID) {
+                host = student
+            }
+            if (student.netid == guestID) {
+                guest = student
+            }
+        }
+        
+        let meal = Meal(date: dictionary["Date"]!, type: dictionary["Type"]!, host: host!, guest: guest!)
+        
+        return meal
     }
     
     
@@ -235,21 +256,22 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
             cell.meal2Label.text = "Meal 2: " + meal2String
         }
             
+            
         else if unfinishedSelected {
             historySelected = false
             upcomingSelected = false
-            let exchange = unfinishedData[indexPath.row]
-            if (currentUser.netid == exchange.host.netid) {
-                student = exchange.guest
+            let meal = unfinishedData[indexPath.row]
+            if (currentUser.netid == meal.host.netid) {
+                student = meal.guest
             }
             else {
-                student = exchange.host
+                student = meal.host
             }
             cell.nameLabel.text = "Meal eXchange with " + student.name + "."
             cell.meal1Label.text = "\(daysLeft) days left to complete!"
             cell.meal2Label.text = ""
             
-
+            
             
         }
         else {
@@ -264,11 +286,10 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
             }
             
             cell.nameLabel.text = "\(exchange.meal1.type) with \(student.name)"
-            self.currentUser = exchange.host
-            self.selectedUser = exchange.guest
+            
             cell.meal1Label.text = "\(exchange.host.club) on \(exchange.meal1.date)"
             cell.meal2Label.text = ""
-
+            
             
             
         }
@@ -309,13 +330,13 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     override func shouldPerformSegueWithIdentifier(identifier: String,sender: AnyObject?) -> Bool {
         
         if (unfinishedSelected) {
-        return true
+            return true
         }
         else {
             return false
         }
     }
-
+    
     
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         if (unfinishedSelected) {
@@ -324,8 +345,8 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
             newViewController.selectedUser = self.selectedUser
             let indexPath = self.tableView.indexPathForSelectedRow
             newViewController.selectedUser = self.unfinishedData[indexPath!.row].guest
-            newViewController.setType = self.unfinishedData[indexPath!.row].meal1.type
-            newViewController.setClub = self.unfinishedData[indexPath!.row].meal1.guest.club
+            newViewController.setType = self.unfinishedData[indexPath!.row].type
+            newViewController.setClub = self.unfinishedData[indexPath!.row].guest.club
         }
     }
 }
