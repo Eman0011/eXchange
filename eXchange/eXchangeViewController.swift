@@ -175,7 +175,12 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         if requestSelected {
-            return 2
+            if searchController.active && searchController.searchBar.text != "" {
+                return 1
+            }
+            else {
+                return 2
+            }
         }
         else {
             return 1
@@ -200,11 +205,17 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     
     func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         if requestSelected {
-            if (section == 1) {
+            if searchController.active && searchController.searchBar.text != "" {
                 return "Princeton"
             }
+                
             else {
-                return "Best Friends"
+                if (section == 1) {
+                    return "Princeton"
+                }
+                else {
+                    return "Best Friends"
+                }
             }
         }
             
@@ -221,6 +232,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         if searchController.active && searchController.searchBar.text != "" {
             student = searchData[indexPath.row]
             if requestSelected {
+                cell.emoji.text = ""
                 cell.nameLabel.text = student.name
                 cell.clubLabel.text = student.club
             }
