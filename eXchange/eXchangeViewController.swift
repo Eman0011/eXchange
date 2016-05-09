@@ -605,7 +605,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                 delay = 1 * Double(NSEC_PER_SEC)
                 time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
                 dispatch_after(time, dispatch_get_main_queue()) {
-                    self.dismissViewControllerAnimated(true, completion: {});
+                    //self.dismissViewControllerAnimated(true, completion: {});
                     
                     
                     //remove the request from pending requests
