@@ -354,13 +354,11 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
             let newViewController:CompleteUnfinishedViewController = segue.destinationViewController as! CompleteUnfinishedViewController
             let indexPath = self.tableView.indexPathForSelectedRow
             
-            newViewController.currentUser = self.currentUser
-            
             if (self.unfinishedData[indexPath!.row].guest.netid == currentUser.netid) {
-                newViewController.selectedUser = self.unfinishedData[indexPath!.row].host
+                newViewController.selectedUser = self.unfinishedData[indexPath!.row].guest
             }
             else {
-                newViewController.selectedUser = self.unfinishedData[indexPath!.row].guest
+                newViewController.selectedUser = self.unfinishedData[indexPath!.row].host
             }
             newViewController.setType = self.unfinishedData[indexPath!.row].type
             newViewController.setClub = self.unfinishedData[indexPath!.row].guest.club
