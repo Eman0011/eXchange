@@ -19,8 +19,9 @@ class CompleteUnfinishedViewController: UIViewController {
     
     var dataBaseRoot = Firebase(url:"https://princeton-exchange.firebaseIO.com")
 
-    var selectedUser: Student = Student(name: "", netid: "", club: "", proxNumber: "", image: "")
-    var currentUser: Student = Student(name: "", netid: "", club: "", proxNumber: "", image: "")
+    var guest: Student = Student(name: "", netid: "", club: "", proxNumber: "", image: "")
+    var host: Student = Student(name: "", netid: "", club: "", proxNumber: "", image: "")
+    var studentRequested: Student = Student(name: "", netid: "", club: "", proxNumber: "", image: "")
 
     var setType: String = ""
     var setClub: String = ""
@@ -43,13 +44,13 @@ class CompleteUnfinishedViewController: UIViewController {
     
     
     @IBAction func doneButton(sender: AnyObject) {
-        let pendingString = "pending/" + self.selectedUser.netid
+        let pendingString = "pending/" + self.studentRequested.netid
         let pendingRoot = dataBaseRoot.childByAppendingPath(pendingString)
         
         let formatter = NSDateFormatter()
         formatter.dateFormat = "MM-dd-yyyy"
         
-        let newEntry: Dictionary<String, String> = ["Date": formatter.stringFromDate(datePicker.date), "Guest": selectedUser.netid, "Host": currentUser.netid, "Type": setType, "Club": setClub]
+        let newEntry: Dictionary<String, String> = ["Date": formatter.stringFromDate(datePicker.date), "Guest": guest.netid, "Host": host.netid, "Type": setType, "Club": setClub]
         
         let newPendingRoot = pendingRoot.childByAutoId()
         

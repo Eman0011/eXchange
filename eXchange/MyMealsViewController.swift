@@ -355,10 +355,15 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
             let indexPath = self.tableView.indexPathForSelectedRow
             
             if (self.unfinishedData[indexPath!.row].guest.netid == currentUser.netid) {
-                newViewController.selectedUser = self.unfinishedData[indexPath!.row].guest
+                newViewController.host = self.unfinishedData[indexPath!.row].guest
+                newViewController.guest = self.unfinishedData[indexPath!.row].host
+                newViewController.studentRequested = self.unfinishedData[indexPath!.row].host
             }
             else {
-                newViewController.selectedUser = self.unfinishedData[indexPath!.row].host
+                newViewController.guest = self.unfinishedData[indexPath!.row].host
+                newViewController.host = self.unfinishedData[indexPath!.row].guest
+                newViewController.studentRequested = self.unfinishedData[indexPath!.row].guest
+
             }
             newViewController.setType = self.unfinishedData[indexPath!.row].type
             newViewController.setClub = self.unfinishedData[indexPath!.row].guest.club
