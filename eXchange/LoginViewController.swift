@@ -15,34 +15,34 @@ class LoginViewController: UIViewController, WKNavigationDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        let url = NSURL(string: "http://www.cs.princeton.edu/~cmoretti/cos333/CAS/CAStestpy.cgi")
+        let url = URL(string: "http://www.cs.princeton.edu/~cmoretti/cos333/CAS/CAStestpy.cgi")
         let marginTop:CGFloat = self.view.bounds.height * 0.05;
         let marginLeft:CGFloat = self.view.bounds.width * 0.08
         let width:CGFloat = self.view.bounds.width - marginLeft
         let height = self.view.bounds.height - marginTop
-        let webView = WKWebView(frame: CGRectMake(marginLeft, marginTop, width, height))
+        let webView = WKWebView(frame: CGRect(x: marginLeft, y: marginTop, width: width, height: height))
 
         webView.navigationDelegate = self
         self.view.addSubview(webView)
-        webView.loadRequest(NSURLRequest(URL: url!))
+        webView.load(URLRequest(url: url!))
     }
     
     
-    func webView(webView: WKWebView, didFinishNavigation navigation: WKNavigation!) {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         webView.evaluateJavaScript("document.body.innerHTML") { (result, error) in
             let page = result as! String
-            if page.containsString("Hello") {
-                let lines = page.characters.split("\n").map { String($0) }
+            if page.contains("Hello") {
+                let lines = page.characters.split(separator: "\n").map { String($0) }
                 let line = lines[0]
-                let start = line.characters.indexOf(",")?.advancedBy(2)
-                self.netid = line.substringFromIndex(start!)
-                self.performSegueWithIdentifier("tabBar", sender: self)
+                let start = line.index((line.characters.index(of: ","))!, offsetBy: 2)
+                self.netid = line.substring(from: start)
+                self.performSegue(withIdentifier: "tabBar", sender: self)
             }
         }
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        let destination = segue.destinationViewController as! eXchangeTabBarController
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let destination = segue.destination as! eXchangeTabBarController
         // uncomment this to un-hardcode userNetID
         destination.userNetID = self.netid
     }

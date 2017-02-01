@@ -26,13 +26,13 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     override func viewDidLoad() {
         eXchangeBanner.image = UIImage(named:"exchange_banner")!
-        self.navigationController?.navigationBarHidden = true
+        self.navigationController?.isNavigationBarHidden = true
         
         
         changePicButton.layer.cornerRadius = 5
-        changePicButton.backgroundColor = UIColor.blackColor()
+        changePicButton.backgroundColor = UIColor.black
         logOutButton.layer.cornerRadius = 5
-        logOutButton.backgroundColor = UIColor.redColor()
+        logOutButton.backgroundColor = UIColor.red
         
         let tbc = self.tabBarController as! eXchangeTabBarController
         self.userNetID = tbc.userNetID;
@@ -41,54 +41,54 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         netIDlabel.text = "NetID: \(tbc.userNetID)"
         clubImageView.image = UIImage(named: tbc.currentUser.club + ".png")
         if (tbc.currentUser.image != "") {
-            let decodedData = NSData(base64EncodedString: tbc.currentUser.image, options: NSDataBase64DecodingOptions.IgnoreUnknownCharacters)
+            let decodedData = Data(base64Encoded: tbc.currentUser.image, options: NSData.Base64DecodingOptions.ignoreUnknownCharacters)
             userImageView.image = UIImage(data: decodedData!)!
         } else {
             userImageView.image = UIImage(named: "princetonTiger.png")
         }
     }
     
-    @IBAction func changeUserImage(sender: AnyObject) {
+    @IBAction func changeUserImage(_ sender: AnyObject) {
         let photoPicker = UIImagePickerController()
         photoPicker.delegate = self
-        photoPicker.sourceType = .PhotoLibrary
+        photoPicker.sourceType = .photoLibrary
         
-        self.presentViewController(photoPicker, animated: true, completion: nil)
+        self.present(photoPicker, animated: true, completion: nil)
     }
     
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         let image : UIImage = (info[UIImagePickerControllerOriginalImage] as? UIImage)!
         
-        picker.dismissViewControllerAnimated(false, completion: { () -> Void in
+        picker.dismiss(animated: false, completion: { () -> Void in
             
             var imageCropVC : RSKImageCropViewController!
             
-            imageCropVC = RSKImageCropViewController(image: image, cropMode: RSKImageCropMode.Circle)
+            imageCropVC = RSKImageCropViewController(image: image, cropMode: RSKImageCropMode.circle)
             
             imageCropVC.delegate = self
             self.navigationController?.pushViewController(imageCropVC, animated: true)
         })
     }
     
-    func imageCropViewControllerDidCancelCrop(controller: RSKImageCropViewController) {
-        self.navigationController?.popViewControllerAnimated(true)
+    func imageCropViewControllerDidCancelCrop(_ controller: RSKImageCropViewController) {
+        self.navigationController?.popViewController(animated: true)
     }
     
-    func imageCropViewController(controller: RSKImageCropViewController, didCropImage croppedImage: UIImage, usingCropRect cropRect: CGRect) {
+    func imageCropViewController(_ controller: RSKImageCropViewController, didCropImage croppedImage: UIImage, usingCropRect cropRect: CGRect) {
         userImageView.image = croppedImage
-        let imageData: NSData = UIImageJPEGRepresentation(croppedImage, 0.3)!
-        let imageString = imageData.base64EncodedStringWithOptions(.Encoding64CharacterLineLength)
-        let studentsRoot = dataBaseRoot.childByAppendingPath("students")
-        let student = studentsRoot.childByAppendingPath(userNetID)
+        let imageData: Data = UIImageJPEGRepresentation(croppedImage, 0.3)!
+        let imageString = imageData.base64EncodedString(options: .lineLength64Characters)
+        let studentsRoot = dataBaseRoot?.child(byAppendingPath: "students")
+        let student = studentsRoot?.child(byAppendingPath: userNetID)
         let imageFolder = ["image" : imageString]
-        student.updateChildValues(imageFolder)
-        self.navigationController?.popViewControllerAnimated(true)
+        student?.updateChildValues(imageFolder)
+        self.navigationController?.popViewController(animated: true)
     }
     
-    @IBAction func logOut(sender: AnyObject) {
+    @IBAction func logOut(_ sender: AnyObject) {
         let mainStoryboard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
-        let loginView = mainStoryboard.instantiateViewControllerWithIdentifier("loginView") as! LoginViewController
-        let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+        let loginView = mainStoryboard.instantiateViewController(withIdentifier: "loginView") as! LoginViewController
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
         appDelegate.window?.rootViewController = loginView
 
 //        UIApplication.sharedApplication().keyWindow?.rootViewController = loginView

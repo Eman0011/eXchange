@@ -17,10 +17,11 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     @IBOutlet var tableView: UITableView!
     @IBOutlet var requestButton: UIButton!
     @IBOutlet var pendingButton: UIButton!
-    
+    @IBOutlet var noFriendsLabel: UILabel!
     
     // MARK: Global variable initialization
     
+    // 
     var studentsData: [Student] = []
     var friendsData: [Student] = []
     var searchData: [Student] = []
@@ -54,11 +55,17 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         print("\n")
         
         let delay = 2 * Double(NSEC_PER_SEC)
-        let time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
-        dispatch_after(time, dispatch_get_main_queue()) {
+        let time = DispatchTime.now() + Double(Int64(delay)) / Double(NSEC_PER_SEC)
+        DispatchQueue.main.asyncAfter(deadline: time) {
             self.studentsData = tbc.studentsData
             self.friendsData = tbc.friendsData
             self.currentUser = tbc.currentUser
+            if (self.currentUser.name == "" || self.currentUser.club == "" || self.currentUser.netid == "") {
+                print("FORCE QUIT")
+                //self.performSegue(withIdentifier: "forceQuit", sender: self)
+                let newViewController:AccessDeniedViewController = self.storyboard?.instantiateViewController(withIdentifier: "forceQuit") as! AccessDeniedViewController
+                self.present(newViewController, animated: true, completion: nil)
+            }
             
             self.loadPending()
             
@@ -68,9 +75,9 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         self.self.eXchangeBanner.image = UIImage(named:"exchange_banner")!
         self.tableView.rowHeight = 100.0
         self.requestButton.layer.cornerRadius = 5
-        self.requestButton.backgroundColor = UIColor.orangeColor()
+        self.requestButton.backgroundColor = UIColor.orange
         self.pendingButton.layer.cornerRadius = 5
-        self.pendingButton.backgroundColor = UIColor.blackColor()
+        self.pendingButton.backgroundColor = UIColor.black
         
         
         // setup search bar
@@ -81,7 +88,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         self.studentsData = []
         loadStudents()
         self.tableView.reloadData()
@@ -89,19 +96,19 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     
     func loadPending() {
         let pendingPath = "pending/" + userNetID
-        let pendingRoot = dataBaseRoot.childByAppendingPath(pendingPath)
-        pendingRoot.observeEventType(.ChildAdded, withBlock:  { snapshot in
-            let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>
+        let pendingRoot = dataBaseRoot?.child(byAppendingPath: pendingPath)
+        pendingRoot?.observe(.childAdded, with:  { snapshot in
+            let dict: Dictionary<String, String> = snapshot!.value as! Dictionary<String, String>
             let meal: Meal = self.getPendingFromDictionary(dict)
             if !(self.pendingData.contains {$0.date == meal.date && $0.host.club == meal.host.club && $0.type == meal.type}) {
                 self.pendingData.append(meal)
             }
             self.tableView.reloadData()
-            }, withCancelBlock:  { error in
+            }, withCancel:  { error in
         })
     }
     
-    func getPendingFromDictionary(dictionary: Dictionary<String, String>) -> Meal {
+    func getPendingFromDictionary(_ dictionary: Dictionary<String, String>) -> Meal {
         let netID1 = dictionary["Host"]
         let netID2 = dictionary["Guest"]
         var host: Student? = nil
@@ -119,15 +126,15 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     }
     
     func loadStudents() {
-        let studentsRoot = dataBaseRoot.childByAppendingPath("students")
-        studentsRoot.observeEventType(.ChildAdded, withBlock:  { snapshot in
-            let student = self.getStudentFromDictionary(snapshot.value as! Dictionary<String, String>)
+        let studentsRoot = dataBaseRoot?.child(byAppendingPath: "students")
+        studentsRoot?.observe(.childAdded, with:  { snapshot in
+            let student = self.getStudentFromDictionary(snapshot?.value as! Dictionary<String, String>)
             self.studentsData.append(student)
             self.tableView.reloadData()
         })
     }
     
-    func getStudentFromDictionary(dictionary: Dictionary<String, String>) -> Student {
+    func getStudentFromDictionary(_ dictionary: Dictionary<String, String>) -> Student {
         let student = Student(name: dictionary["name"]!, netid: dictionary["netID"]!, club: dictionary["club"]!, proxNumber: dictionary["proxNumber"]!, image: dictionary["image"]!)
         
         if (student.netid == userNetID) {
@@ -146,24 +153,24 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     
     // MARK: - Button Actions
     
-    @IBAction func requestButtonPressed(sender: AnyObject) {
+    @IBAction func requestButtonPressed(_ sender: AnyObject) {
         requestSelected = true
-        requestButton.backgroundColor = UIColor.orangeColor()
-        pendingButton.backgroundColor = UIColor.blackColor()
+        requestButton.backgroundColor = UIColor.orange
+        pendingButton.backgroundColor = UIColor.black
         
         tableView.tableHeaderView = searchController.searchBar
         tableView.reloadData()
         
     }
     
-    @IBAction func pendingButtonPressed(sender: AnyObject) {
+    @IBAction func pendingButtonPressed(_ sender: AnyObject) {
         requestSelected = false
-        pendingButton.backgroundColor = UIColor.orangeColor()
-        requestButton.backgroundColor = UIColor.blackColor()
+        pendingButton.backgroundColor = UIColor.orange
+        requestButton.backgroundColor = UIColor.black
         
         self.searchController.searchBar.text = ""
         self.searchController.searchBar.endEditing(true)
-        self.searchController.active = false
+        self.searchController.isActive = false
         
         tableView.tableHeaderView = nil
         tableView.reloadData()
@@ -173,13 +180,13 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     
     // MARK: - Table view data source
     
-    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         if requestSelected {
-            if searchController.active && searchController.searchBar.text != "" {
+            if searchController.isActive && searchController.searchBar.text != "" {
                 return 1
             }
             else {
-                return 2
+                return 1
             }
         }
         else {
@@ -187,8 +194,9 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if searchController.active && searchController.searchBar.text != "" {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+
+        if searchController.isActive && searchController.searchBar.text != "" {
             return searchData.count
         }
         if requestSelected {
@@ -196,25 +204,32 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                 return studentsData.count
             }
             else {
+                if (friendsData.count == 0 && !searchController.isActive) {
+                    self.noFriendsLabel.text = "You haven't exchanged with anyone yet! Search for a friend to eXchange with."
+                }
+                else {
+                    self.noFriendsLabel.text = ""
+                }
                 return friendsData.count
             }
         } else {
+            self.noFriendsLabel.text = ""
             return pendingData.count
         }
     }
     
-    func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         if requestSelected {
-            if searchController.active && searchController.searchBar.text != "" {
+            if searchController.isActive && searchController.searchBar.text != "" {
                 return "Princeton"
             }
                 
             else {
                 if (section == 1) {
-                    return "Princeton"
+                    return "Friends"
                 }
                 else {
-                    return "Best Friends"
+                    return "Friends"
                 }
             }
         }
@@ -224,13 +239,15 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
     
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("exchangeCell", forIndexPath: indexPath) as! eXchangeTableViewCell
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "exchangeCell", for: indexPath) as! eXchangeTableViewCell
         var student: Student
         
+        print(friendsData.count)
+
         // If the user has searched for another student, populate cells with matching users
-        if searchController.active && searchController.searchBar.text != "" {
-            student = searchData[indexPath.row]
+        if searchController.isActive && searchController.searchBar.text != "" {
+            student = searchData[(indexPath as NSIndexPath).row]
             if requestSelected {
                 cell.emoji.text = ""
                 cell.nameLabel.text = student.name
@@ -241,46 +258,53 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             // If the user is not searching, just populate cells with all appropriate groups of users
         else {
             if requestSelected {
-                if (indexPath.section == 1) {
-                    student = studentsData[indexPath.row]
-                    cell.emoji.text = ""
-                }
-                else {
-                    student = friendsData[indexPath.row]
-                    if (indexPath.row == 0) {
-                        cell.emoji.text = "\u{e106}"
-                    }
-                    else if (indexPath.row < 4) {
-                        cell.emoji.text = "\u{e056}"
+//                if ((indexPath as NSIndexPath).section == 1) {
+//                    student = studentsData[(indexPath as NSIndexPath).row]
+//                    cell.emoji.text = ""
+//                }
+               // else {
+                    student = friendsData[(indexPath as NSIndexPath).row]
+                    if (friendsData.count == 0) {
+                        cell.nameLabel.text = "You don't have any friends yet! Search for a friend to eXchange with."
+                        print("friends data is 0, it's: ")
+                        print(friendsData.count)
                     }
                     else {
-                        cell.emoji.text = "\u{e415}"
+                        if ((indexPath as NSIndexPath).row == 0) {
+                            cell.emoji.text = "\u{e106}"
+                        }
+                        else if ((indexPath as NSIndexPath).row < 4) {
+                            cell.emoji.text = "\u{e056}"
+                        }
+                        else {
+                            cell.emoji.text = "\u{e415}"
+                        }
+                        
+                        if (student.friendScore > 50) {
+                            cell.emoji.text = "\u{e34a}\u{e331}\u{1F351}"
+                        }
+                        else if (student.friendScore > 45) {
+                            cell.emoji.text = "\u{1F351}"
+                        }
+                        else if (student.friendScore > 40) {
+                            cell.emoji.text = "\u{e34a}"
+                        
                     }
-                    
-                    if (student.friendScore > 50) {
-                        cell.emoji.text = "\u{e34a}\u{e331}\u{1F351}"
-                    }
-                    else if (student.friendScore > 45) {
-                        cell.emoji.text = "\u{1F351}"
-                    }
-                    else if (student.friendScore > 40) {
-                        cell.emoji.text = "\u{e34a}"
-                    }
+                    cell.nameLabel.text = student.name
+                    cell.clubLabel.text = student.club
                 }
-                cell.nameLabel.text = student.name
-                cell.clubLabel.text = student.club
             } else {
                 cell.emoji.text = ""
-                if (self.pendingData[indexPath.row].host.netid == userNetID) {
-                    student = pendingData[indexPath.row].guest
+                if (self.pendingData[(indexPath as NSIndexPath).row].host.netid == userNetID) {
+                    student = pendingData[(indexPath as NSIndexPath).row].guest
                 }
                 else {
-                    student = pendingData[indexPath.row].host
+                    student = pendingData[(indexPath as NSIndexPath).row].host
                 }
                 
                 if student.name != "" {
-                    let string1 = student.name + " wants to get " + pendingData[indexPath.row].type + " at " + pendingData[indexPath.row].host.club
-                    let string2 = " on " + self.getDayOfWeekString(pendingData[indexPath.row].date)!
+                    let string1 = student.name + " wants to get " + pendingData[(indexPath as NSIndexPath).row].type + " at " + pendingData[(indexPath as NSIndexPath).row].host.club
+                    let string2 = " on " + self.getDayOfWeekString(pendingData[(indexPath as NSIndexPath).row].date)!
                     
                     cell.nameLabel.text = string1 + string2
                     cell.clubLabel.text = ""
@@ -289,7 +313,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         }
         
         if (student.image != "") {
-            let decodedData = NSData(base64EncodedString: student.image, options: NSDataBase64DecodingOptions.IgnoreUnknownCharacters)
+            let decodedData = Data(base64Encoded: student.image, options: NSData.Base64DecodingOptions.ignoreUnknownCharacters)
             cell.studentImage.image = UIImage(data: decodedData!)!
         } else {
             cell.studentImage.image = UIImage(named: "princetonTiger.png")
@@ -297,98 +321,44 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         return cell
     }
     
-    func getDayOfWeekString(today:String)->String? {
-        let formatter  = NSDateFormatter()
-        formatter.dateFormat = "MM-dd-yyyy"
-        if let todayDate = formatter.dateFromString(today) {
-            let myCalendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)!
-            let myComponents = myCalendar.components([.Weekday, .Month , .Day], fromDate: todayDate)
-            let month = myComponents.month
-            
-            let date = myComponents.day
-            let weekDay = myComponents.weekday
-            var stringDay = ""
-            var stringMonth = ""
-            switch weekDay {
-            case 1:
-                stringDay = "Sun, "
-            case 2:
-                stringDay = "Mon, "
-            case 3:
-                stringDay = "Tue, "
-            case 4:
-                stringDay = "Wed, "
-            case 5:
-                stringDay = "Thu, "
-            case 6:
-                stringDay = "Fri, "
-            case 7:
-                stringDay = "Sat, "
-            default:
-                stringDay = "Day"
-            }
-            
-            switch month {
-            case 1:
-                stringMonth = "January "
-            case 2:
-                stringMonth = "February "
-            case 3:
-                stringMonth = "March "
-            case 4:
-                stringMonth = "April "
-            case 5:
-                stringMonth = "May "
-            case 6:
-                stringMonth = "June "
-            case 7:
-                stringMonth = "July "
-            case 8:
-                stringMonth = "August "
-            case 9:
-                stringMonth = "September "
-            case 10:
-                stringMonth = "October "
-            case 11:
-                stringMonth = "November "
-            case 12:
-                stringMonth = "December "
-                
-            default:
-                stringDay = "Month"
-            }
-            return stringDay + stringMonth + String(date)
-        } else {
-            return nil
-        }
-    }
-    
-    
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         // If the user taps on a cell in the request a meal tab, then segue to the create request view controller
         if requestSelected {
-            if (indexPath.section == 1) {
-                if (currentUser.club != self.studentsData[indexPath.row].club) {
-                    if (searchController.active && searchController.searchBar.text != "") {
-                        if (currentUser.club != self.searchData[indexPath.row].club) {
-                            performSegueWithIdentifier("createRequestSegue", sender: nil)
+            if ((indexPath as NSIndexPath).section == 1) {
+                print("tap tap tap")
+                if (currentUser.club != self.studentsData[(indexPath as NSIndexPath).row].club) {
+                    if (searchController.isActive && searchController.searchBar.text != "") {
+                        if (currentUser.club != self.searchData[(indexPath as NSIndexPath).row].club) {
+                            performSegue(withIdentifier: "createRequestSegue", sender: nil)
                         }
                     }
                     else {
-                        performSegueWithIdentifier("createRequestSegue", sender: nil)
+                        performSegue(withIdentifier: "createRequestSegue", sender: nil)
                     }
                 }
             }
             else {
-                if (currentUser.club != self.friendsData[indexPath.row].club) {
-                    if (searchController.active && searchController.searchBar.text != "") {
-                        if (currentUser.club != self.searchData[indexPath.row].club) {
-                            performSegueWithIdentifier("createRequestSegue", sender: nil)
+                if (self.friendsData.count > 0) {
+                    if (searchController.isActive && searchController.searchBar.text != "") {
+                        if (currentUser.club != self.searchData[(indexPath as NSIndexPath).row].club) {
+                            performSegue(withIdentifier: "createRequestSegue", sender: nil)
                         }
                     }
                     else {
-                        performSegueWithIdentifier("createRequestSegue", sender: nil)
+                        performSegue(withIdentifier: "createRequestSegue", sender: nil)
+                    }
+                }
+                else {
+                    if (currentUser.club != self.searchData[(indexPath as NSIndexPath).row].club) {
+                        if (searchController.isActive && searchController.searchBar.text != "") {
+                            if (currentUser.club != self.searchData[(indexPath as NSIndexPath).row].club) {
+                                performSegue(withIdentifier: "createRequestSegue", sender: nil)
+                            }
+                        }
+                        else {
+                            performSegue(withIdentifier: "createRequestSegue", sender: nil)
+                        }
                     }
                 }
             }
@@ -398,22 +368,22 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             // If the user taps on a cell in the pending meals tab, then popup an alert allowing them to accept, reschedule, decline, or cancel the action
         else {
             
-            let alert = UIAlertController(title: nil, message: nil, preferredStyle: UIAlertControllerStyle.Alert)
-            alert.addAction(UIAlertAction(title: "Accept", style: .Default, handler:{ action in self.executeAction(action, indexPath:indexPath)}))
-            alert.addAction(UIAlertAction(title: "Reschedule", style: .Default, handler:{ action in self.executeAction(action, indexPath:indexPath)}))
-            alert.addAction(UIAlertAction(title: "Decline", style: .Default, handler:{ action in self.executeAction(action, indexPath:indexPath)}))
+            let alert = UIAlertController(title: nil, message: nil, preferredStyle: UIAlertControllerStyle.alert)
+            alert.addAction(UIAlertAction(title: "Accept", style: .default, handler:{ action in self.executeAction(action, indexPath:indexPath)}))
+            alert.addAction(UIAlertAction(title: "Reschedule", style: .default, handler:{ action in self.executeAction(action, indexPath:indexPath)}))
+            alert.addAction(UIAlertAction(title: "Decline", style: .default, handler:{ action in self.executeAction(action, indexPath:indexPath)}))
             
-            alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
-            self.presentViewController(alert, animated: true, completion: nil)
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+            self.present(alert, animated: true, completion: nil)
         }
-        tableView.deselectRowAtIndexPath(indexPath, animated: true)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     // Define special actions for accept, reschedule, and decline options
-    func executeAction(alert: UIAlertAction!, indexPath: NSIndexPath){
+    func executeAction(_ alert: UIAlertAction!, indexPath: IndexPath){
         let response = alert.title!
         
-        path = indexPath.row
+        path = (indexPath as NSIndexPath).row
         mealAtPath = pendingData[path]
         
         if (response == "Accept") {
@@ -422,27 +392,28 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             let upcomingString1 = "upcoming/" + pendingData[self.path].host.netid
             let upcomingString2 = "upcoming/" + pendingData[self.path].guest.netid
             
-            let upcomingRoot1 = dataBaseRoot.childByAppendingPath(upcomingString1)
-            let upcomingRoot2 = dataBaseRoot.childByAppendingPath(upcomingString2)
+            let upcomingRoot1 = dataBaseRoot?.child(byAppendingPath: upcomingString1)
+            let upcomingRoot2 = dataBaseRoot?.child(byAppendingPath: upcomingString2)
             
-            let formatter = NSDateFormatter()
+            let formatter = DateFormatter()
             formatter.dateFormat = "MM-dd-yyyy"
             
             let newEntry: Dictionary<String, String> = ["Date": pendingData[self.path].date, "Guest": pendingData[self.path].guest.netid, "Host": pendingData[self.path].host.netid, "Type": pendingData[self.path].type, "Club": pendingData[self.path].host.club]
             
             let pendingString1 = "pending/" + self.currentUser.netid + "/"
             
-            let pendingRootToUpdate = self.dataBaseRoot.childByAppendingPath(pendingString1)
+            let pendingRootToUpdate = self.dataBaseRoot?.child(byAppendingPath: pendingString1)
             
-            pendingRootToUpdate.observeEventType(.Value, withBlock: { snapshot in
-                let children = snapshot.children
-                while let child = children.nextObject() as? FDataSnapshot {
-                    let clubString = (child.value["Club"] as! NSString) as String
-                    let guestString = (child.value["Guest"] as! NSString) as String
-                    let hostString = (child.value["Host"] as! NSString) as String
-                    let dateString = (child.value["Date"] as! NSString) as String
-                    let typeString = (child.value["Type"] as! NSString) as String
-                    
+            pendingRootToUpdate?.observe(.value, with: { snapshot in
+                let children = snapshot?.children
+                
+                while let child = children?.nextObject() as? FDataSnapshot {
+                    let childDict = child.value as! NSDictionary
+                    let clubString = (childDict.value(forKey: "Club") as! NSString) as String
+                    let guestString = (childDict.value(forKey: "Guest") as! NSString) as String
+                    let hostString = (childDict.value(forKey: "Host") as! NSString) as String
+                    let dateString = (childDict.value(forKey: "Date") as! NSString) as String
+                    let typeString = (childDict.value(forKey: "Type") as! NSString) as String
                     if(clubString == self.pendingData[self.path].host.club &&
                         guestString == self.pendingData[self.path].guest.netid &&
                         hostString == self.pendingData[self.path].host.netid &&
@@ -451,9 +422,8 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                             if(!found) {
                                 found = true
                                 let pendingString2 = pendingString1 + String(child.key)
-                                print(child.key)
-                                let pendingRootToRemove = self.dataBaseRoot.childByAppendingPath(pendingString2)
-                                pendingRootToRemove.removeValue()
+                                let pendingRootToRemove = self.dataBaseRoot?.child(byAppendingPath: pendingString2)
+                                pendingRootToRemove?.removeValue()
                             }
                     }
                 }
@@ -461,16 +431,16 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             
             
             let delay = 1 * Double(NSEC_PER_SEC)
-            let time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
-            dispatch_after(time, dispatch_get_main_queue()) {
-                let newUpcomingRoot1 = upcomingRoot1.childByAutoId()
-                let newUpcomingRoot2 = upcomingRoot2.childByAutoId()
+            let time = DispatchTime.now() + Double(Int64(delay)) / Double(NSEC_PER_SEC)
+            DispatchQueue.main.asyncAfter(deadline: time) {
+                let newUpcomingRoot1 = upcomingRoot1?.childByAutoId()
+                let newUpcomingRoot2 = upcomingRoot2?.childByAutoId()
                 
-                newUpcomingRoot1.updateChildValues(newEntry)
-                newUpcomingRoot2.updateChildValues(newEntry)
+                newUpcomingRoot1?.updateChildValues(newEntry)
+                newUpcomingRoot2?.updateChildValues(newEntry)
                 
                 //remove the request from pending requests
-                self.pendingData.removeAtIndex(self.path)
+                self.pendingData.remove(at: self.path)
                 self.tableView.reloadData()
             }
             
@@ -478,7 +448,7 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
         else if (response == "Reschedule") {
             //prompt the user to create a new exchange
             
-            performSegueWithIdentifier("rescheduleRequestSegue", sender: nil)
+            performSegue(withIdentifier: "rescheduleRequestSegue", sender: nil)
             
             tableView.reloadData()
         }
@@ -487,15 +457,16 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             var found = false
             let pendingString1 = "pending/" + self.currentUser.netid + "/"
             
-            let pendingRootToUpdate = self.dataBaseRoot.childByAppendingPath(pendingString1)
-            pendingRootToUpdate.observeEventType(.Value, withBlock: { snapshot in
-                let children = snapshot.children
-                while let child = children.nextObject() as? FDataSnapshot {
-                    let clubString = (child.value["Club"] as! NSString) as String
-                    let guestString = (child.value["Guest"] as! NSString) as String
-                    let hostString = (child.value["Host"] as! NSString) as String
-                    let dateString = (child.value["Date"] as! NSString) as String
-                    let typeString = (child.value["Type"] as! NSString) as String
+            let pendingRootToUpdate = self.dataBaseRoot?.child(byAppendingPath: pendingString1)
+            pendingRootToUpdate?.observe(.value, with: { snapshot in
+                let children = snapshot?.children
+                while let child = children?.nextObject() as? FDataSnapshot {
+                    let childDict = child.value as! NSDictionary
+                    let clubString = (childDict.value(forKey: "Club") as! NSString) as String
+                    let guestString = (childDict.value(forKey: "Guest") as! NSString) as String
+                    let hostString = (childDict.value(forKey: "Host") as! NSString) as String
+                    let dateString = (childDict.value(forKey: "Date") as! NSString) as String
+                    let typeString = (childDict.value(forKey: "Type") as! NSString) as String
                     
                     if(clubString == self.pendingData[self.path].host.club &&
                         guestString == self.pendingData[self.path].guest.netid &&
@@ -505,16 +476,16 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                             if(!found) {
                                 found = true
                                 let pendingString2 = pendingString1 + String(child.key)
-                                let pendingRootToRemove = self.dataBaseRoot.childByAppendingPath(pendingString2)
-                                pendingRootToRemove.removeValue()
+                                let pendingRootToRemove = self.dataBaseRoot?.child(byAppendingPath: pendingString2)
+                                pendingRootToRemove?.removeValue()
                             }
                     }
                 }
             });
             let delay = 1 * Double(NSEC_PER_SEC)
-            let time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
-            dispatch_after(time, dispatch_get_main_queue()) {
-                self.pendingData.removeAtIndex(self.path)
+            let time = DispatchTime.now() + Double(Int64(delay)) / Double(NSEC_PER_SEC)
+            DispatchQueue.main.asyncAfter(deadline: time) {
+                self.pendingData.remove(at: self.path)
                 self.tableView.reloadData()
             }
             
@@ -524,24 +495,28 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     
     // MARK: - Search Functions
     
-    func filterContentForSearchText(searchText: String, scope: String = "All") {
+    func filterContentForSearchText(_ searchText: String, scope: String = "All") {
         if requestSelected {
             searchData = studentsData.filter { student in
-                return student.name.lowercaseString.containsString(searchText.lowercaseString)
+                return student.name.lowercased().contains(searchText.lowercased())
             }
         }
         
         tableView.reloadData()
     }
     
-    func updateSearchResultsForSearchController(searchController: UISearchController) {
+    func updateSearchResults(for searchController: UISearchController) {
         filterContentForSearchText(searchController.searchBar.text!)
+    }
+    
+    func textFieldDidBeginEditing(textField: UITextField) {
+        tableView.setContentOffset(CGPoint(x: 0, y: textField.center.y-60), animated: true)
     }
     
     
     // MARK: - Navigation
     
-    @IBAction func myUnwindAction(unwindSegue: UIStoryboardSegue) {
+    @IBAction func myUnwindAction(_ unwindSegue: UIStoryboardSegue) {
         if unwindSegue.identifier == "unwindCancel" {
             rescheduleDoneButtonHit = false
         }
@@ -565,9 +540,9 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             if ((selectedClub == otherUser.club || selectedClub == currentUser.club) && (selectedType == "Lunch" || selectedType == "Dinner")) {
                 
                 let pendingString = "pending/" + otherUser.netid + "/"
-                let pendingRoot = dataBaseRoot.childByAppendingPath(pendingString)
+                let pendingRoot = dataBaseRoot?.child(byAppendingPath: pendingString)
                 
-                let formatter = NSDateFormatter()
+                let formatter = DateFormatter()
                 formatter.dateFormat = "MM-dd-yyyy"
                 
                 var host: Student? = nil
@@ -585,24 +560,25 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                 let newEntry: Dictionary<String, String> = ["Club": selectedClub, "Date": selectedDate, "Guest": (guest?.netid)!, "Host": (host?.netid)!, "Type": selectedType]
                 
                 var delay = 1 * Double(NSEC_PER_SEC)
-                var time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
-                dispatch_after(time, dispatch_get_main_queue()) {
-                    let newPendingRoot = pendingRoot.childByAutoId()
-                    newPendingRoot.updateChildValues(newEntry)
+                var time = DispatchTime.now() + Double(Int64(delay)) / Double(NSEC_PER_SEC)
+                DispatchQueue.main.asyncAfter(deadline: time) {
+                    let newPendingRoot = pendingRoot?.childByAutoId()
+                    newPendingRoot?.updateChildValues(newEntry)
                 }
                 
                 // this code removes the request from the requested user
                 let pendingString1 = "pending/" + self.currentUser.netid + "/"
                 
-                let pendingRootToUpdate = self.dataBaseRoot.childByAppendingPath(pendingString1)
-                pendingRootToUpdate.observeEventType(.Value, withBlock: { snapshot in
-                    let children = snapshot.children
-                    while let child = children.nextObject() as? FDataSnapshot {
-                        let clubString = (child.value["Club"] as! NSString) as String
-                        let guestString = (child.value["Guest"] as! NSString) as String
-                        let hostString = (child.value["Host"] as! NSString) as String
-                        let dateString = (child.value["Date"] as! NSString) as String
-                        let typeString = (child.value["Type"] as! NSString) as String
+                let pendingRootToUpdate = self.dataBaseRoot?.child(byAppendingPath: pendingString1)
+                pendingRootToUpdate?.observe(.value, with: { snapshot in
+                    let children = snapshot?.children
+                    while let child = children?.nextObject() as? FDataSnapshot {
+                        let childDict = child.value as! NSDictionary
+                        let clubString = (childDict.value(forKey: "Club") as! NSString) as String
+                        let guestString = (childDict.value(forKey: "Guest") as! NSString) as String
+                        let hostString = (childDict.value(forKey: "Host") as! NSString) as String
+                        let dateString = (childDict.value(forKey: "Date") as! NSString) as String
+                        let typeString = (childDict.value(forKey: "Type") as! NSString) as String
                         
                         if(clubString == self.pendingData[self.path].host.club &&
                             guestString == self.pendingData[self.path].guest.netid &&
@@ -610,19 +586,19 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
                             dateString == self.pendingData[self.path].date &&
                             typeString == self.pendingData[self.path].type) {
                                 let pendingString2 = pendingString1 + String(child.key)
-                                let pendingRootToRemove = self.dataBaseRoot.childByAppendingPath(pendingString2)
-                                pendingRootToRemove.removeValue()
+                                let pendingRootToRemove = self.dataBaseRoot?.child(byAppendingPath: pendingString2)
+                                pendingRootToRemove?.removeValue()
                         }
                     }
                 });
                 delay = 1 * Double(NSEC_PER_SEC)
-                time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
-                dispatch_after(time, dispatch_get_main_queue()) {
+                time = DispatchTime.now() + Double(Int64(delay)) / Double(NSEC_PER_SEC)
+                DispatchQueue.main.asyncAfter(deadline: time) {
                     //self.dismissViewControllerAnimated(true, completion: {});
                     
                     
                     //remove the request from pending requests
-                    self.pendingData.removeAtIndex(self.path)
+                    self.pendingData.remove(at: self.path)
                     self.tableView.reloadData()
                     self.rescheduleDoneButtonHit = true
                 }
@@ -632,25 +608,26 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
     }
     
     // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "createRequestSegue" {
-            let newViewController:CreateRequestViewController = segue.destinationViewController as! CreateRequestViewController
+            let newViewController:CreateRequestViewController = segue.destination as! CreateRequestViewController
             let indexPath = self.tableView.indexPathForSelectedRow
-            if searchController.active && searchController.searchBar.text != "" {
-                newViewController.selectedUser = self.searchData[indexPath!.row]
+            if searchController.isActive && searchController.searchBar.text != "" {
+                newViewController.selectedUser = self.searchData[(indexPath! as NSIndexPath).row]
+                self.searchController.isActive = false
             }
             else {
-                if (indexPath?.section == 1) {
-                    newViewController.selectedUser = self.studentsData[indexPath!.row]
+                if ((indexPath as NSIndexPath?)?.section == 1) {
+                    newViewController.selectedUser = self.studentsData[(indexPath! as NSIndexPath).row]
                 }
                 else {
-                    newViewController.selectedUser = self.friendsData[indexPath!.row]
+                    newViewController.selectedUser = self.friendsData[(indexPath! as NSIndexPath).row]
                 }
             }
             newViewController.currentUser = self.currentUser
         }
         else if segue.identifier == "rescheduleRequestSegue" {
-            let newViewController:RescheduleRequestViewController = segue.destinationViewController as! RescheduleRequestViewController
+            let newViewController:RescheduleRequestViewController = segue.destination as! RescheduleRequestViewController
             
             if (self.pendingData[path].host.netid == userNetID) {
                 newViewController.selectedUser = self.pendingData[path].guest
@@ -661,9 +638,84 @@ class eXchangeViewController: UIViewController, UITableViewDelegate, UITableView
             }
             newViewController.currentUser = self.currentUser
         }
+//        else {
+//            print("FORCE QUIT 2")
+//            print(segue.identifier)
+//            let destination = segue.destination as! AccessDeniedViewController
+//        }
         
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
+    }
+    
+    
+    func getDayOfWeekString(_ today:String)->String? {
+        let formatter  = DateFormatter()
+        formatter.dateFormat = "MM-dd-yyyy"
+        if let todayDate = formatter.date(from: today) {
+            let myCalendar = Calendar(identifier: Calendar.Identifier.gregorian)
+            let myComponents = (myCalendar as NSCalendar).components([.weekday, .month , .day], from: todayDate)
+            let month = myComponents.month
+            
+            let date = myComponents.day
+            let weekDay = myComponents.weekday
+            var stringDay = ""
+            var stringMonth = ""
+            switch weekDay {
+            case 1?:
+                stringDay = "Sun, "
+            case 2?:
+                stringDay = "Mon, "
+            case 3?:
+                stringDay = "Tues, "
+            case 4?:
+                stringDay = "Wed, "
+            case 5?:
+                stringDay = "Thu, "
+            case 6?:
+                stringDay = "Fri, "
+            case 7?:
+                stringDay = "Sat, "
+            default:
+                stringDay = "Day"
+            }
+            
+            switch month {
+            case 1?:
+                stringMonth = "January "
+            case 2?:
+                stringMonth = "February "
+            case 3?:
+                stringMonth = "March "
+            case 4?:
+                stringMonth = "April "
+            case 5?:
+                stringMonth = "May "
+            case 6?:
+                stringMonth = "June "
+            case 7?:
+                stringMonth = "July "
+            case 8?:
+                stringMonth = "August "
+            case 9?:
+                stringMonth = "September "
+            case 10?:
+                stringMonth = "October "
+            case 11?:
+                stringMonth = "November "
+            case 12?:
+                stringMonth = "December "
+                
+            default:
+                stringDay = "Month"
+            }
+            let stringValue = String(describing: date)
+            let sketchy1 = stringValue.components(separatedBy: "(")
+            let sketchy2 = sketchy1[1].components(separatedBy: ")")
+            return stringDay + stringMonth + sketchy2[0]
+        } else {
+            return nil
+        }
     }
 }
 

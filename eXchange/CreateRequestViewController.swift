@@ -27,7 +27,7 @@ class CreateRequestViewController: UIViewController, UIPickerViewDataSource, UIP
 
     
     override func viewDidLoad() {
-        datePicker.minimumDate = NSDate()
+        datePicker.minimumDate = Date()
         super.viewDidLoad()
         pickerData.append("Please select a club")
         pickerData.append(selectedUser.club)
@@ -42,16 +42,20 @@ class CreateRequestViewController: UIViewController, UIPickerViewDataSource, UIP
         mealTypePicker.delegate = self
     }
     
-    @IBAction func cancelButton(sender: AnyObject) {
-        self.dismissViewControllerAnimated(true, completion: {});
+    @IBAction func cancelButton(_ sender: AnyObject) {
+        self.dismiss(animated: true, completion: {});
     }
     
-    @IBAction func doneButton(sender: AnyObject) {
+    @IBAction func doneButton(_ sender: AnyObject) {
         if ((selectedClub == selectedUser.club || selectedClub == currentUser.club) && (selectedType == "Lunch" || selectedType == "Dinner")) {
+//            let selectedDate = sender.date
+//            let delegate = UIApplication.shared.delegate as? AppDelegate
+//            delegate?.scheduleNotification(at: selectedDate)
+//            
             let pendingString = "pending/" + self.selectedUser.netid
-            let pendingRoot = dataBaseRoot.childByAppendingPath(pendingString)
+            let pendingRoot = dataBaseRoot?.child(byAppendingPath: pendingString)
             
-            let formatter = NSDateFormatter()
+            let formatter = DateFormatter()
             formatter.dateFormat = "MM-dd-yyyy"
             
             var host: Student? = nil
@@ -66,28 +70,39 @@ class CreateRequestViewController: UIViewController, UIPickerViewDataSource, UIP
                 guest = selectedUser
             }
             
-            let newEntry: Dictionary<String, String> = ["Date": formatter.stringFromDate(datePicker.date), "Guest": (guest?.netid)!, "Host": (host?.netid)!, "Type": selectedType, "Club": selectedClub]
+            let newEntry: Dictionary<String, String> = ["Date": formatter.string(from: datePicker.date), "Guest": (guest?.netid)!, "Host": (host?.netid)!, "Type": selectedType, "Club": selectedClub]
             
-            let newPendingRoot = pendingRoot.childByAutoId()
-            newPendingRoot.updateChildValues(newEntry)
-            self.dismissViewControllerAnimated(true, completion: {});
+            let newPendingRoot = pendingRoot?.childByAutoId()
+            newPendingRoot?.updateChildValues(newEntry)
+            self.dismiss(animated: true, completion: {});
             
             let friendsString = "friends/" + currentUser.netid + "/"
-            let friendsRoot = dataBaseRoot.childByAppendingPath(friendsString + selectedUser.netid)
-            let otherRoot = dataBaseRoot.childByAppendingPath(friendsString)
-            friendsRoot.observeSingleEventOfType(.Value, withBlock: { snapshot in
-                let num = String(snapshot.value)
-                if (num != "<null>") {
-                    let newval = Int(num)!+1
-                    let dict = [self.selectedUser.netid : String(newval)]
-                    otherRoot.updateChildValues(dict)
+            let friendsRoot = dataBaseRoot?.child(byAppendingPath: friendsString + selectedUser.netid)
+            let otherRoot = dataBaseRoot?.child(byAppendingPath: friendsString)
+            
+            friendsRoot?.observeSingleEvent(of: .value, with: { snapshot in
+                let num = snapshot!.value
+                if (num != nil) {
+                    let stringValue = String(describing: num)
+                    let sketchy1 = stringValue.components(separatedBy: "(")
+                    let sketchy2 = sketchy1[1].components(separatedBy: ")")
+                    
+                    var count = 0
+                    if (sketchy2[0] == "<null>") {
+                        count = 1
+                    }
+                    else {
+                        count = Int(sketchy2[0])! + 1
+                    }
+                    let dict = [self.selectedUser.netid : String(describing: count)]
+                    otherRoot?.updateChildValues(dict)
                 }
                 else {
                     let dict = [self.selectedUser.netid : String(1)]
-                    otherRoot.updateChildValues(dict)
+                    otherRoot?.updateChildValues(dict)
                 }
                 
-                }, withCancelBlock: { error in
+                }, withCancel: { error in
             })
 
         }
@@ -95,15 +110,15 @@ class CreateRequestViewController: UIViewController, UIPickerViewDataSource, UIP
     
     //MARK: - Delegates and data sources
     //MARK: Data Sources
-    func numberOfComponentsInPickerView(pickerView: UIPickerView) -> Int {
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
         return 1
     }
-    func pickerView(pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
         return pickerData.count
     }
     
     //MARK: Delegates
-    func pickerView(pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         if (pickerView.tag == 1) {
             return pickerData[row]
         }
@@ -112,7 +127,7 @@ class CreateRequestViewController: UIViewController, UIPickerViewDataSource, UIP
         }
     }
     
-    func pickerView(pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         if (pickerView.tag == 1) {
             selectedClub = pickerData[row]
         }

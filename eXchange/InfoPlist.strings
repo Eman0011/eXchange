@@ -1,0 +1,8 @@
+/* 
+  InfoPlist.strings
+  eXchange
+
+  Created by James Almeida on 9/26/16.
+  Copyright © 2016 Emanuel Castaneda. All rights reserved.
+*/
+"NSPhotoLibraryUsageDescription" = "We need this so you can change your profile picture!";

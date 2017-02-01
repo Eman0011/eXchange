@@ -33,7 +33,7 @@ class RescheduleRequestViewController: UIViewController, UIPickerViewDataSource,
     override func viewDidLoad() {
         selectedClub = "Please select a club"
         selectedType = "Please select a meal"
-        datePicker.minimumDate = NSDate()
+        datePicker.minimumDate = Date()
         super.viewDidLoad()
         pickerData.append("Please select a club")
         pickerData.append(selectedUser.club)
@@ -49,26 +49,26 @@ class RescheduleRequestViewController: UIViewController, UIPickerViewDataSource,
     }
     
   
-    @IBAction func doneButton(sender: AnyObject) {
+    @IBAction func doneButton(_ sender: AnyObject) {
 
     }
    
 
-    @IBAction func cancelButton(sender: AnyObject) {
-        self.dismissViewControllerAnimated(true, completion: {});
+    @IBAction func cancelButton(_ sender: AnyObject) {
+        self.dismiss(animated: true, completion: {});
     }
     
     //MARK: - Delegates and data sources
     //MARK: Data Sources
-    func numberOfComponentsInPickerView(pickerView: UIPickerView) -> Int {
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
         return 1
     }
-    func pickerView(pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
         return pickerData.count
     }
     
     //MARK: Delegates
-    func pickerView(pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         
         if (pickerView.tag == 1) {
             return pickerData[row]
@@ -78,7 +78,7 @@ class RescheduleRequestViewController: UIViewController, UIPickerViewDataSource,
         }
     }
     
-    func pickerView(pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         if (pickerView.tag == 1) {
             selectedClub = pickerData[row]
         }
@@ -86,9 +86,9 @@ class RescheduleRequestViewController: UIViewController, UIPickerViewDataSource,
             selectedType = mealTypePickerData[row]
         }
         
-        let formatter = NSDateFormatter()
+        let formatter = DateFormatter()
         formatter.dateFormat = "MM-dd-yyyy"
-        selectedDate = formatter.stringFromDate(datePicker.date)
+        selectedDate = formatter.string(from: datePicker.date)
     }
     
     

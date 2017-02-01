@@ -27,36 +27,36 @@ class CompleteUnfinishedViewController: UIViewController {
     var setClub: String = ""
 
     override func viewDidLoad() {
-        datePicker.minimumDate = NSDate()
-        let endDate = NSCalendar.currentCalendar().dateByAddingUnit(
-            .Day,
+        datePicker.minimumDate = Date()
+        let endDate = (Calendar.current as NSCalendar).date(
+            byAdding: .day,
             value: daysLeft,
-            toDate: NSDate(),
-            options: NSCalendarOptions(rawValue: 0))
+            to: Date(),
+            options: NSCalendar.Options(rawValue: 0))
         datePicker.maximumDate = endDate
         meal.text = setType
         club.text = setClub
     }
     
-    @IBAction func cancelButton(sender: AnyObject) {
-        self.dismissViewControllerAnimated(true, completion: {});
+    @IBAction func cancelButton(_ sender: AnyObject) {
+        self.dismiss(animated: true, completion: {});
     }
     
     
-    @IBAction func doneButton(sender: AnyObject) {
+    @IBAction func doneButton(_ sender: AnyObject) {
         let pendingString = "pending/" + self.studentRequested.netid
-        let pendingRoot = dataBaseRoot.childByAppendingPath(pendingString)
+        let pendingRoot = dataBaseRoot?.child(byAppendingPath: pendingString)
         
-        let formatter = NSDateFormatter()
+        let formatter = DateFormatter()
         formatter.dateFormat = "MM-dd-yyyy"
         
-        let newEntry: Dictionary<String, String> = ["Date": formatter.stringFromDate(datePicker.date), "Guest": guest.netid, "Host": host.netid, "Type": setType, "Club": setClub]
+        let newEntry: Dictionary<String, String> = ["Date": formatter.string(from: datePicker.date), "Guest": guest.netid, "Host": host.netid, "Type": setType, "Club": setClub]
         
-        let newPendingRoot = pendingRoot.childByAutoId()
+        let newPendingRoot = pendingRoot?.childByAutoId()
         
-        newPendingRoot.updateChildValues(newEntry)
+        newPendingRoot?.updateChildValues(newEntry)
         
-        self.dismissViewControllerAnimated(true, completion: {});
+        self.dismiss(animated: true, completion: {});
     }
     
 }

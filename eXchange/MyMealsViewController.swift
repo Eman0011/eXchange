@@ -31,7 +31,7 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     var historySelected = false
     var unfinishedSelected = true
     var upcomingSelected = false
-    let formatter = NSDateFormatter()
+    let formatter = DateFormatter()
     var dataBaseRoot = Firebase(url:"https://princeton-exchange.firebaseIO.com")
     var userNetID: String = ""
     
@@ -43,29 +43,24 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
         self.tableView.rowHeight = 100.0
         
         unfinishedButton.layer.cornerRadius = 5
-        unfinishedButton.backgroundColor = UIColor.orangeColor()
+        unfinishedButton.backgroundColor = UIColor.orange
         upcomingButton.layer.cornerRadius = 5
-        upcomingButton.backgroundColor = UIColor.blackColor()
+        upcomingButton.backgroundColor = UIColor.black
         historyButton.layer.cornerRadius = 5
-        historyButton.backgroundColor = UIColor.blackColor()
+        historyButton.backgroundColor = UIColor.black
         
         formatter.dateFormat = "MM-dd-yyyy"
-        formatter.AMSymbol = "am"
-        formatter.PMSymbol = "pm"
+        formatter.amSymbol = "am"
+        formatter.pmSymbol = "pm"
         
         daysLeft = getDaysLeft()
         let tbc = self.tabBarController as! eXchangeTabBarController
         self.studentsData = tbc.studentsData
         self.userNetID = tbc.userNetID
         self.currentUser = tbc.currentUser
-        
-        self.loadUnfinished()
-        self.loadUpcoming()
-        self.loadHistory()
-        
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         self.loadUnfinished()
         self.loadUpcoming()
         self.loadHistory()
@@ -74,11 +69,11 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     
     func loadHistory() {
         let path = "complete-exchange/" + userNetID
-        let historyRoot = dataBaseRoot.childByAppendingPath(path)
+        let historyRoot = dataBaseRoot?.child(byAppendingPath: path)
         self.historyData = []
         
-        historyRoot.observeEventType(.ChildAdded, withBlock: { snapshot in
-            let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>
+        historyRoot?.observe(.childAdded, with: { snapshot in
+            let dict: Dictionary<String, String> = snapshot!.value as! Dictionary<String, String>
             let exchange: eXchange = self.getCompleteFromDictionary(dict)
             self.historyData.append(exchange)
             self.tableView.reloadData()
@@ -87,16 +82,16 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     
     func loadUnfinished() {
         let path = "incomplete-exchange/" + userNetID
-        let unfinishedRoot = dataBaseRoot.childByAppendingPath(path)
+        let unfinishedRoot = dataBaseRoot?.child(byAppendingPath: path)
         self.unfinishedData = []
         
-        unfinishedRoot.observeEventType(.ChildAdded, withBlock: { snapshot in
-            let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>
+        unfinishedRoot?.observe(.childAdded, with: { snapshot in
+            let dict: Dictionary<String, String> = snapshot!.value as! Dictionary<String, String>
             let meal: Meal = self.getIncompleteFromDictionary(dict)
-            let todayDate = NSDate()
-            let myCalendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)!
-            let todayComponents = myCalendar.components([.Month], fromDate: todayDate)
-            let exchangeComponents = myCalendar.components([.Month], fromDate: self.formatter.dateFromString(meal.date)!)
+            let todayDate = Date()
+            let myCalendar = Calendar(identifier: Calendar.Identifier.gregorian)
+            let todayComponents = (myCalendar as NSCalendar).components([.month], from: todayDate)
+            let exchangeComponents = (myCalendar as NSCalendar).components([.month], from: self.formatter.date(from: meal.date)!)
             
             if (todayComponents.month == exchangeComponents.month) {
                 self.unfinishedData.append(meal)
@@ -107,12 +102,12 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     
     func loadUpcoming() {
         let path = "upcoming/" + userNetID
-        let upcomingRoot = dataBaseRoot.childByAppendingPath(path)
+        let upcomingRoot = dataBaseRoot?.child(byAppendingPath: path)
         self.upcomingData = []
         
         
-        upcomingRoot.observeEventType(.ChildAdded, withBlock: { snapshot in
-            let dict: Dictionary<String, String> = snapshot.value as! Dictionary<String, String>
+        upcomingRoot?.observe(.childAdded, with: { snapshot in
+            let dict: Dictionary<String, String> = snapshot!.value as! Dictionary<String, String>
             let exchange: eXchange = self.getUpcomingFromDictionary(dict)
             self.upcomingData.append(exchange)
             self.tableView.reloadData()
@@ -120,7 +115,7 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     }
     
     
-    func getCompleteFromDictionary(dictionary: Dictionary<String, String>) -> eXchange {
+    func getCompleteFromDictionary(_ dictionary: Dictionary<String, String>) -> eXchange {
         let netID2 = dictionary["Student"]
         var student1: Student? = nil
         var student2: Student? = nil
@@ -143,7 +138,7 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
         return exchange
     }
     
-    func getUpcomingFromDictionary(dictionary: Dictionary<String, String>) -> eXchange {
+    func getUpcomingFromDictionary(_ dictionary: Dictionary<String, String>) -> eXchange {
         let hostID = dictionary["Host"]
         let guestID = dictionary["Guest"]
         var host: Student? = nil
@@ -166,7 +161,7 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
         return exchange
     }
     
-    func getIncompleteFromDictionary(dictionary: Dictionary<String, String>) -> Meal {
+    func getIncompleteFromDictionary(_ dictionary: Dictionary<String, String>) -> Meal {
         let hostID = dictionary["Host"]
         let guestID = dictionary["Guest"]
         var host: Student? = nil
@@ -195,46 +190,46 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     
     // MARK: - Button Actions
     
-    @IBAction func upcomingButtonPressed(sender: AnyObject) {
+    @IBAction func upcomingButtonPressed(_ sender: AnyObject) {
         historySelected = false
         unfinishedSelected = false
         upcomingSelected = true
-        upcomingButton.backgroundColor = UIColor.orangeColor()
-        historyButton.backgroundColor = UIColor.blackColor()
-        unfinishedButton.backgroundColor = UIColor.blackColor()
+        upcomingButton.backgroundColor = UIColor.orange
+        historyButton.backgroundColor = UIColor.black
+        unfinishedButton.backgroundColor = UIColor.black
         tableView.reloadData()
     }
-    @IBAction func historyButtonPressed(sender: AnyObject) {
+    @IBAction func historyButtonPressed(_ sender: AnyObject) {
         historySelected = true
         unfinishedSelected = false
         upcomingSelected = false
-        historyButton.backgroundColor = UIColor.orangeColor()
-        unfinishedButton.backgroundColor = UIColor.blackColor()
-        upcomingButton.backgroundColor = UIColor.blackColor()
+        historyButton.backgroundColor = UIColor.orange
+        unfinishedButton.backgroundColor = UIColor.black
+        upcomingButton.backgroundColor = UIColor.black
         tableView.reloadData()
     }
     
-    @IBAction func unfinishedButtonPressed(sender: AnyObject) {
+    @IBAction func unfinishedButtonPressed(_ sender: AnyObject) {
         historySelected = false
         unfinishedSelected = true
         upcomingSelected = false
-        unfinishedButton.backgroundColor = UIColor.orangeColor()
-        historyButton.backgroundColor = UIColor.blackColor()
-        upcomingButton.backgroundColor = UIColor.blackColor()
+        unfinishedButton.backgroundColor = UIColor.orange
+        historyButton.backgroundColor = UIColor.black
+        upcomingButton.backgroundColor = UIColor.black
         tableView.reloadData()
     }
     
     // MARK: - Table view data source
     
-    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
     
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        tableView.deselectRowAtIndexPath(indexPath, animated: true)
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if historySelected {
             return historyData.count
         }
@@ -248,13 +243,13 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     
     
     /* NOTE: uses the eXchangeTableViewCell layout for simplicity. nameLabel serves as description label, and clubLabel serves as information label */
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("userCell", forIndexPath: indexPath) as! MyMealsTableViewCell
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "userCell", for: indexPath) as! MyMealsTableViewCell
         var student: Student
         if historySelected {
             unfinishedSelected = false
             upcomingSelected = false
-            let exchange = historyData[indexPath.row]
+            let exchange = historyData[(indexPath as NSIndexPath).row]
             student = exchange.guest
             cell.nameLabel.text = exchange.guest.name
             let meal2String: String
@@ -271,7 +266,7 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
         else if unfinishedSelected {
             historySelected = false
             upcomingSelected = false
-            let meal = unfinishedData[indexPath.row]
+            let meal = unfinishedData[(indexPath as NSIndexPath).row]
             if (currentUser.netid == meal.host.netid) {
                 student = meal.guest
             }
@@ -288,9 +283,9 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
         else {
             historySelected = false
             unfinishedSelected = false
-            let exchange = upcomingData[indexPath.row]
+            let exchange = upcomingData[(indexPath as NSIndexPath).row]
             
-            if (self.upcomingData[indexPath.row].host.netid == userNetID) {
+            if (self.upcomingData[(indexPath as NSIndexPath).row].host.netid == userNetID) {
                 student = exchange.guest
             } else {
                 student = exchange.host
@@ -305,7 +300,7 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
             
         }
         if (student.image != "") {
-            let decodedData = NSData(base64EncodedString: student.image, options: NSDataBase64DecodingOptions.IgnoreUnknownCharacters)
+            let decodedData = Data(base64Encoded: student.image, options: NSData.Base64DecodingOptions.ignoreUnknownCharacters)
             cell.studentImage.image = UIImage(data: decodedData!)!
         } else {
             cell.studentImage.image = UIImage(named: "princetonTiger.png")
@@ -315,13 +310,13 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     
     /* calculate the number of days left to complete meal eXchange */
     func getDaysLeft() -> Int {
-        let today = NSDate()
-        let calendar = NSCalendar.currentCalendar()
-        let components = calendar.components([.Day], fromDate: today)
+        let today = Date()
+        let calendar = Calendar.current
+        let components = (calendar as NSCalendar).components([.day], from: today)
         let xStart = components.day
-        let range = calendar.rangeOfUnit(.Day, inUnit: .Month, forDate: today)
+        let range = (calendar as NSCalendar).range(of: .day, in: .month, for: today)
         let xEnd = range.length
-        return xEnd - xStart
+        return xEnd - xStart!
     }
     
     
@@ -338,7 +333,7 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
      */
     
     
-    override func shouldPerformSegueWithIdentifier(identifier: String,sender: AnyObject?) -> Bool {
+    override func shouldPerformSegue(withIdentifier identifier: String,sender: Any?) -> Bool {
         
         if (unfinishedSelected) {
             return true
@@ -349,24 +344,24 @@ class MyMealsViewController: UIViewController, UITableViewDelegate, UITableViewD
     }
     
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if (unfinishedSelected) {
-            let newViewController:CompleteUnfinishedViewController = segue.destinationViewController as! CompleteUnfinishedViewController
+            let newViewController:CompleteUnfinishedViewController = segue.destination as! CompleteUnfinishedViewController
             let indexPath = self.tableView.indexPathForSelectedRow
             
-            if (self.unfinishedData[indexPath!.row].guest.netid == currentUser.netid) {
-                newViewController.host = self.unfinishedData[indexPath!.row].guest
-                newViewController.guest = self.unfinishedData[indexPath!.row].host
-                newViewController.studentRequested = self.unfinishedData[indexPath!.row].host
+            if (self.unfinishedData[(indexPath! as NSIndexPath).row].guest.netid == currentUser.netid) {
+                newViewController.host = self.unfinishedData[(indexPath! as NSIndexPath).row].guest
+                newViewController.guest = self.unfinishedData[(indexPath! as NSIndexPath).row].host
+                newViewController.studentRequested = self.unfinishedData[(indexPath! as NSIndexPath).row].host
             }
             else {
-                newViewController.guest = self.unfinishedData[indexPath!.row].host
-                newViewController.host = self.unfinishedData[indexPath!.row].guest
-                newViewController.studentRequested = self.unfinishedData[indexPath!.row].guest
+                newViewController.guest = self.unfinishedData[(indexPath! as NSIndexPath).row].host
+                newViewController.host = self.unfinishedData[(indexPath! as NSIndexPath).row].guest
+                newViewController.studentRequested = self.unfinishedData[(indexPath! as NSIndexPath).row].guest
 
             }
-            newViewController.setType = self.unfinishedData[indexPath!.row].type
-            newViewController.setClub = self.unfinishedData[indexPath!.row].guest.club
+            newViewController.setType = self.unfinishedData[(indexPath! as NSIndexPath).row].type
+            newViewController.setClub = self.unfinishedData[(indexPath! as NSIndexPath).row].guest.club
         }
     }
 }
